@@ -5,12 +5,6 @@ You explore a randomly generated world, assemble a party of heroes, visit market
 
 ---
 
-## Student Information
-
-- **Name:** Archit Kiran Kumar 
-
----
-
 ## File & Package Overview
 
 Project is organized into the following top-level packages:
