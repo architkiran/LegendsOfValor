@@ -7,9 +7,7 @@ You explore a randomly generated world, assemble a party of heroes, visit market
 
 ## Student Information
 
-- **Name:** Archit Kiran Kumar  
-- **BUID:** U15354769  
-- **Email:** architkk@bu.edu  
+- **Name:** Archit Kiran Kumar 
 
 ---
 
