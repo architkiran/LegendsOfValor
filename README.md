@@ -1,6 +1,6 @@
 # Legends of Valor
 
-A console-based, turn-based RPG built in Java using object-oriented design and classic design patterns.  
+A console-based, turn-based RPG built in Java using object-oriented design and classic design patterns.
 You explore a randomly generated world, assemble a party of heroes, visit markets, and battle monsters in a tactical, turn-based combat system.
 
 ---
