@@ -103,6 +103,7 @@ public class LegendsGame {
         System.out.println();
 
         System.out.println(BOLD + "Welcome, traveler!" + RESET);
+        System.out.println("This is Legends: Monsters and Heroes.");
         System.out.println(
                 "Your journey begins in a world filled with danger,\n" +
                 "magic, and legendary monsters. Build a powerful team\n" +
@@ -111,29 +112,52 @@ public class LegendsGame {
 
         // Gameplay explanation section
         System.out.println(YELL + BOLD + "HOW TO PLAY THE GAME:" + RESET);
-
-        System.out.println(" • " + BOLD + "Explore the World:" + RESET + " Move across the map to find markets and battles.");
-        System.out.println(" • " + BOLD + "P is the Party's current position on the map." + RESET);
-        System.out.println(" • " + BOLD + "Explore:" + RESET + " Use W / A / S / D keys to move.");
-        System.out.println(" • " + BOLD + "Assemble Your Party:" + RESET + " Choose 1–3 heroes to form your team.");
-        System.out.println(" • " + BOLD + "Visit Markets:" + RESET + " Buy weapons, armor, spells, and potions.");
-        System.out.println(" • " + BOLD + "Manage your items by opening the inventory with 'I'.");
-        System.out.println(" • " + BOLD + "Battles:" + RESET + " Fight monsters using strategy!");
-        System.out.println("       - Heroes act in turn");
-        System.out.println("       - Monsters act after all heroes");
-        System.out.println("       - Manage spells, potions, and equipment wisely");
         System.out.println();
 
-        System.out.println(" • " + BOLD + "After each battle:" + RESET);
-        System.out.println("       - Heroes heal 10% HP/MP per round");
-        System.out.println("       - Fainted heroes revive at 50% HP/MP");
-        System.out.println("       - Heroes earn XP & gold to grow stronger");
+        // • EXPLORE THE WORLD
+        System.out.println(" • " + BOLD + "EXPLORE THE WORLD" + RESET);
+        System.out.println("   Move across the map using W / A / S / D.");
+        System.out.println("   Markets (M) offer supplies. Inaccessible tiles (X) cannot be crossed.");
+        System.out.println("   Your party is shown as the symbol 'P'.");
         System.out.println();
 
+        // • BUILD YOUR PARTY
+        System.out.println(" • " + BOLD + "BUILD YOUR PARTY" + RESET);
+        System.out.println("   Choose 1–3 heroes from Warriors, Paladins, and Sorcerers.");
+        System.out.println("   Each class has unique strengths — mix them wisely.");
+        System.out.println();
+
+        // • MARKETS & ITEMS
+        System.out.println(" • " + BOLD + "MARKETS & ITEMS" + RESET);
+        System.out.println("   Visit markets to buy weapons, armor, spells, and potions.");
+        System.out.println("   Open your inventory anytime with 'I'.");
+        System.out.println("   Manage equipment per hero and optimize your loadout.");
+        System.out.println();
+
+        // • TURN-BASED BATTLES
+        System.out.println(" • " + BOLD + "TURN-BASED BATTLES" + RESET);
+        System.out.println("   When monsters appear, each hero acts in order:");
+        System.out.println("      - Attack with weapons");
+        System.out.println("      - Cast spells");
+        System.out.println("      - Use potions");
+        System.out.println("      - Change equipment");
+        System.out.println("   After the heroes finish, monsters take their turn.");
+        System.out.println("   Use strategy — dodges, debuffs, and mana matter!");
+        System.out.println();
+
+        // • PROGRESSION & RECOVERY
+        System.out.println(" • " + BOLD + "PROGRESSION & RECOVERY" + RESET);
+        System.out.println("   After each battle:");
+        System.out.println("      - Heroes regenerate 10% HP & MP between rounds");
+        System.out.println("      - Fallen heroes revive at 50% HP/MP if the party wins");
+        System.out.println("      - All heroes gain XP & gold to grow stronger over time");
+        System.out.println();
+
+        // TIP section
         System.out.println(GREEN + BOLD + "TIP:" + RESET);
-        System.out.println(" • Press 'I' during exploration to open inventory.");
-        System.out.println(" • Press 'Q' in battle to flee.");
-        System.out.println(" • Safe tiles reduce chance of encounters.");
+        System.out.println(" • Press 'I' during exploration to open your inventory");
+        System.out.println(" • Press 'Q' during battle to flee");
+        System.out.println(" • Safe tiles reduce the chance of random encounters");
         System.out.println();
 
         // Wait for player to start

@@ -1,4 +1,6 @@
-# Legends of Valor
+
+## CS 611: Object Oriented Principles and Practices
+# Legends of Valor: Monsters and Heroes
 
 A console-based, turn-based RPG built in Java using object-oriented design and classic design patterns.  
 You explore a randomly generated world, assemble a party of heroes, visit markets, and battle monsters in a tactical, turn-based combat system.
@@ -210,21 +212,35 @@ magic, and legendary monsters. Build a powerful team
 of heroes and guide them to victory.
 
 HOW TO PLAY THE GAME:
- • Explore the World: Move across the map to find markets and battles.
- • P is the Party's current position on the map.
- • Explore: Use W / A / S / D keys to move.
- • Assemble Your Party: Choose 1–3 heroes to form your team.
- • Visit Markets: Buy weapons, armor, spells, and potions.
- • Manage your items by opening the inventory with 'I'.
- • Battles: Fight monsters using strategy!
-       - Heroes act in turn
-       - Monsters act after all heroes
-       - Manage spells, potions, and equipment wisely
 
- • After each battle:
-       - Heroes heal 10% HP/MP per round
-       - Fainted heroes revive at 50% HP/MP
-       - Heroes earn XP & gold to grow stronger
+ • EXPLORE THE WORLD
+   Move across the map using W / A / S / D.
+   Markets (M) offer supplies. Inaccessible tiles (X) cannot be crossed.
+   Your party is shown as the symbol 'P'.
+
+ • BUILD YOUR PARTY
+   Choose 1–3 heroes from Warriors, Paladins, and Sorcerers.
+   Each class has unique strengths — mix them wisely.
+
+ • MARKETS & ITEMS
+   Visit markets to buy weapons, armor, spells, and potions.
+   Open your inventory anytime with 'I'.
+   Manage equipment per hero and optimize your loadout.
+
+ • TURN-BASED BATTLES
+   When monsters appear, each hero acts in order:
+      - Attack with weapons
+      - Cast spells
+      - Use potions
+      - Change equipment
+   After the heroes finish, monsters take their turn.
+   Use strategy — dodges, debuffs, and mana matter!
+
+ • PROGRESSION & RECOVERY
+   After each battle:
+      - Heroes regenerate 10% HP & MP between rounds
+      - Fallen heroes revive at 50% HP/MP if the party wins
+      - All heroes gain XP & gold to grow stronger over time
 
 TIP:
  • Press 'I' during exploration to open inventory.
@@ -410,12 +426,12 @@ Choose action for Gaerdal_Ironhand:
 	- MapGenerator.generate(size) centralizes world creation and randomness.<br>
 	- DataLoader acts as a factory for heroes, items, and monsters from text files.
 
-- Strategy-like Behavior via Interfaces / Composition<br>
+- Strategy Pattern<br>
 	- Item is an interface; different item types (Weapon, Armor, Potion, Spell) implement their own behavior but can be handled polymorphically.
 
 	- SpellType and PotionAttribute enums combined with logic in BattleState and Hero allow flexible behavior per type without large if/else chains scattered across the codebase.
 
-- Encapsulation & Information Hiding<br>
+- Facade Pattern<br>
 	- Each package hides its implementation details; other packages only use public APIs (Party, Market, WorldMap, etc.), making future changes safer.
 
 
