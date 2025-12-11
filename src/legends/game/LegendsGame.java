@@ -22,7 +22,7 @@ import legends.items.Item;
 
 import java.util.List;
 
-public class LegendsGame {
+public class LegendsGame implements Game {
 
     // Current active game state (exploration, battle, inventory, etc.)
     private GameState state;

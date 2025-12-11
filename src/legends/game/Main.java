@@ -14,12 +14,9 @@ public class Main {
      * Program entry point.
      * Creates the game and launches the main run sequence.
      */
-    public static void main(String[] args) {
-
         // Create the core game controller object
-        LegendsGame game = new LegendsGame();
+        public static void main(String[] args) {
+        new LegendsApp().run();
 
-        // Begin the full game flow (intro, hero select, exploration, battles)
-        game.run();
     }
 }

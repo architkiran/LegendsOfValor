@@ -1,14 +1,3 @@
-/**
- * Handles hero selection at the start of the game.
- * Allows the player to choose 1–3 heroes from Warriors, Paladins, or Sorcerers.
- * 
- * Responsibilities:
- * - Load all heroes from DataLoader
- * - Apply PDF HP/MP rules (HP = lvl × 100, MP = lvl × 50)
- * - Show a formatted selection menu grouped by hero type
- * - Build the player's final Party object
- */
-
 package legends.game;
 
 import legends.characters.*;
@@ -17,6 +6,10 @@ import legends.data.DataLoader;
 import java.util.*;
 
 public class HeroSelection {
+
+    // ===== NEW: configurable party size =====
+    private final int minParty;
+    private final int maxParty;
 
     // Lists of heroes grouped by type for easy display and selection
     private final List<Warrior>  warriors;
@@ -37,10 +30,20 @@ public class HeroSelection {
     private static final String RED   = "\u001B[91m";
 
     /**
-     * Loads all hero types using DataLoader and immediately resets
-     * their HP/MP using the PDF rules.
+     * Default: allow between 1 and 3 heroes (used by Monsters & Heroes).
      */
     public HeroSelection(DataLoader loader) {
+        this(loader, 1, 3);
+    }
+
+    /**
+     * Configurable constructor: allow between minParty and maxParty heroes.
+     * For Legends of Valor you’ll call this with (3, 3).
+     */
+    public HeroSelection(DataLoader loader, int minParty, int maxParty) {
+        this.minParty = minParty;
+        this.maxParty = maxParty;
+
         this.warriors  = loader.loadWarriors();
         this.paladins  = loader.loadPaladins();
         this.sorcerers = loader.loadSorcerers();
@@ -67,13 +70,10 @@ public class HeroSelection {
     /**
      * Core selection loop:
      * - Displays all heroes
-     * - Lets the user pick 1–3
+     * - Lets the user pick [minParty .. maxParty]
      * - Builds and returns a Party object
      */
     public Party selectHeroes() {
-
-        final int MIN_PARTY = 1;
-        final int MAX_PARTY = 3;
 
         Party party = new Party();
 
@@ -83,21 +83,24 @@ public class HeroSelection {
             Map<Integer, Hero> indexMap = printHeroMenu();
 
             System.out.println();
-            System.out.println(YELL + "You may choose between " + MIN_PARTY + " and " + MAX_PARTY + " heroes." + RESET);
+            if (minParty == maxParty) {
+                System.out.println(YELL + "You must choose exactly " + minParty + " heroes." + RESET);
+            } else {
+                System.out.println(YELL + "You may choose between " + minParty + " and " + maxParty + " heroes." + RESET);
+            }
             System.out.println("Select by number, or " + BOLD + "0" + RESET + " to finish.");
             System.out.println();
 
-            // Allow selection until 3 heroes max
-            while (party.getHeroes().size() < MAX_PARTY) {
+            while (party.getHeroes().size() < maxParty) {
                 int currentCount = party.getHeroes().size();
-                System.out.print("Select hero " + (currentCount + 1) + " of " + MAX_PARTY + " (0 = done): ");
+                System.out.print("Select hero " + (currentCount + 1) + " of " + maxParty + " (0 = done): ");
 
                 String line = in.nextLine().trim();
 
-                // User wants to finish choosing
+                // User wants to finish
                 if (line.equals("0")) {
-                    if (party.getHeroes().size() >= MIN_PARTY) break;
-                    System.out.println(RED("You must have at least one hero."));
+                    if (party.getHeroes().size() >= minParty) break;
+                    System.out.println(RED("You must have at least " + minParty + " heroes."));
                     continue;
                 }
 
@@ -108,48 +111,36 @@ public class HeroSelection {
                     continue;
                 }
 
-                // Look up hero by number
                 Hero chosen = indexMap.get(choice);
                 if (chosen == null) {
                     System.out.println(RED("No hero with number " + choice + "."));
                     continue;
                 }
 
-                // Prevent duplicates
                 if (party.getHeroes().contains(chosen)) {
                     System.out.println(YELL + chosen.getName() + " is already chosen." + RESET);
                     continue;
                 }
 
-                // Add hero to party
                 party.addHero(chosen);
                 System.out.println(GREEN + "✔ Added " + chosen.getName() + RESET);
 
-                // Stop selection if limit reached
-                if (party.getHeroes().size() == MAX_PARTY) {
-                    System.out.println("\nYou have reached the maximum (" + MAX_PARTY + ").");
+                if (party.getHeroes().size() == maxParty) {
+                    System.out.println("\nYou have reached the maximum (" + maxParty + ").");
                 }
             }
 
-            // Requirements met → exit loop
-            if (party.getHeroes().size() >= MIN_PARTY) break;
+            if (party.getHeroes().size() >= minParty) break;
 
-            System.out.println("\n" + RED("You must pick at least one hero.") + "\n");
+            System.out.println("\n" + RED("You must pick at least " + minParty + " hero(s).") + "\n");
         }
 
-        // Print final summary of chosen heroes
         printFinalParty(party);
         return party;
     }
 
-    // =========================================================
-    // PRINTING / UI HELPERS
-    // =========================================================
+    // ----------------- (rest of the class unchanged) -----------------
 
-    /**
-     * Displays all available heroes grouped by class.
-     * Also creates and returns a map linking index numbers to heroes.
-     */
     private Map<Integer, Hero> printHeroMenu() {
         Map<Integer, Hero> indexMap = new LinkedHashMap<>();
         int idx = 1;
@@ -166,7 +157,7 @@ public class HeroSelection {
                 String.format("%-4s %-20s %-4s %-6s %-6s %-6s %-6s %-6s",
                         "No", "Name", "Lvl", "HP", "MP", "STR", "DEX", "AGI") + RESET;
 
-        // --- Warriors section ---
+        // Warriors
         if (!warriors.isEmpty()) {
             System.out.println(BLUE + "⚔️  WARRIORS — Strong melee fighters" + RESET);
             System.out.println(header);
@@ -178,7 +169,7 @@ public class HeroSelection {
             System.out.println();
         }
 
-        // --- Paladins section ---
+        // Paladins
         if (!paladins.isEmpty()) {
             System.out.println(CYAN + "🛡️  PALADINS — Holy warriors with balanced stats" + RESET);
             System.out.println(header);
@@ -190,7 +181,7 @@ public class HeroSelection {
             System.out.println();
         }
 
-        // --- Sorcerers section ---
+        // Sorcerers
         if (!sorcerers.isEmpty()) {
             System.out.println(MAG + "✨ SORCERERS — Powerful magic users" + RESET);
             System.out.println(header);
@@ -205,9 +196,6 @@ public class HeroSelection {
         return indexMap;
     }
 
-    /**
-     * Prints one formatted row in the hero table.
-     */
     private void printHeroRow(int idx, Hero h) {
         System.out.printf(
                 "%-4d %-20s %-4d %-6d %-6d %-6d %-6d %-6d%n",
@@ -222,9 +210,6 @@ public class HeroSelection {
         );
     }
 
-    /**
-     * Prints the final chosen party summary after selection finishes.
-     */
     private void printFinalParty(Party party) {
         System.out.println();
         System.out.println("=============== " + GREEN + "YOUR PARTY" + RESET + " ===============");
