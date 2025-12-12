@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# IntelliJ / JetBrains
+.idea/
+*.iml
+
+# Build output
+out/
+
+# Game saves
+saves/
