@@ -5,23 +5,6 @@ import java.util.Random;
 import legends.characters.Hero;
 import legends.characters.Monster;
 
-/**
- * Legends of Valor board (8x8 World of Play).
- *
- * Columns:
- *   0-1: Top lane
- *   2  : Wall (inaccessible)
- *   3-4: Mid lane
- *   5  : Wall (inaccessible)
- *   6-7: Bot lane
- *
- * Rows:
- *   0: Monsters' Nexus
- *   7: Heroes' Nexus
- *
- * All other lane cells are randomly assigned to:
- *   PLAIN, BUSH, CAVE, KOULOU, or OBSTACLE.
- */
 public class ValorBoard {
 
     public static final int ROWS = 8;
@@ -30,7 +13,7 @@ public class ValorBoard {
     private final ValorTile[][] grid;
     private final Random rng = new Random();
 
-    // ANSI colors (same style as your project)
+    // ANSI colors
     private static final String RESET   = "\u001B[0m";
     private static final String BOLD    = "\u001B[1m";
     private static final String RED     = "\u001B[31m";
@@ -46,10 +29,6 @@ public class ValorBoard {
         generateLayout();
     }
 
-    // =========================================================
-    //  BASIC ACCESSORS
-    // =========================================================
-
     public ValorTile getTile(int row, int col) {
         return grid[row][col];
     }
@@ -59,7 +38,7 @@ public class ValorBoard {
     }
 
     // =========================================================
-    //  BOARD GENERATION
+    // BOARD GENERATION
     // =========================================================
 
     private void generateLayout() {
@@ -87,17 +66,17 @@ public class ValorBoard {
     private ValorCellType randomLaneType() {
         // Approx distribution:
         // 40% PLAIN, 20% BUSH, 20% CAVE, 15% KOULOU, 5% OBSTACLE
-        int v = rng.nextInt(20);  // 0..19
+        int v = rng.nextInt(20);
 
-        if (v < 8)           return ValorCellType.PLAIN;    // 8/20 = 40%
-        else if (v < 12)     return ValorCellType.BUSH;     // 4/20 = 20%
-        else if (v < 16)     return ValorCellType.CAVE;     // 4/20 = 20%
-        else if (v < 19)     return ValorCellType.KOULOU;   // 3/20 = 15%
-        else                 return ValorCellType.OBSTACLE; // 1/20 = 5%
+        if (v < 8)           return ValorCellType.PLAIN;
+        else if (v < 12)     return ValorCellType.BUSH;
+        else if (v < 16)     return ValorCellType.CAVE;
+        else if (v < 19)     return ValorCellType.KOULOU;
+        else                 return ValorCellType.OBSTACLE;
     }
 
     // =========================================================
-    //  LANE & NEXUS HELPERS
+    // LANE & NEXUS HELPERS
     // =========================================================
 
     public boolean isNexus(int row, int col) {
@@ -113,7 +92,7 @@ public class ValorBoard {
     }
 
     /**
-     * Returns lane index:
+     * lane index:
      *   0 = top lane (cols 0–1)
      *   1 = mid lane (cols 3–4)
      *   2 = bot lane (cols 6–7)
@@ -131,7 +110,7 @@ public class ValorBoard {
     }
 
     // =========================================================
-    //  MOVEMENT / OCCUPANCY
+    // MOVEMENT / OCCUPANCY
     // =========================================================
 
     public boolean canHeroEnter(int row, int col) {
@@ -153,7 +132,7 @@ public class ValorBoard {
     }
 
     // =========================================================
-    //  SPAWN HELPERS
+    // SPAWN HELPERS
     // =========================================================
 
     public int[] getNexusColumnsForLane(int lane) {
@@ -171,14 +150,14 @@ public class ValorBoard {
     }
 
     public int[] getMonsterSpawnCell(int lane) {
-    int[] cols = getNexusColumnsForLane(lane);
-    // PDF rule: monsters spawn in the RIGHT space of their lane’s Nexus
-    if (cols.length < 2) return new int[]{0, cols[0]};
-    return new int[]{0, cols[1]};
-}
+        int[] cols = getNexusColumnsForLane(lane);
+        // monsters spawn in the RIGHT space of their lane’s Nexus
+        if (cols.length < 2) return new int[]{0, cols[0]};
+        return new int[]{0, cols[1]};
+    }
 
     // =========================================================
-    //  PRINTING — thick white grid like Monsters & Heroes map
+    // PRINTING
     // =========================================================
 
     public void print() {
@@ -189,7 +168,6 @@ public class ValorBoard {
         printTopBorder();
 
         for (int r = 0; r < ROWS; r++) {
-            // row contents
             System.out.print("  ");
             System.out.print("┃");
             for (int c = 0; c < COLS; c++) {
@@ -201,7 +179,6 @@ public class ValorBoard {
             }
             System.out.println("┃");
 
-            // separator between rows
             if (r < ROWS - 1) {
                 printMiddleBorder();
             }
@@ -215,9 +192,7 @@ public class ValorBoard {
         System.out.print("┏");
         for (int c = 0; c < COLS; c++) {
             System.out.print("━━━");
-            if (c < COLS - 1) {
-                System.out.print("┳");
-            }
+            if (c < COLS - 1) System.out.print("┳");
         }
         System.out.println("┓");
     }
@@ -227,9 +202,7 @@ public class ValorBoard {
         System.out.print("┣");
         for (int c = 0; c < COLS; c++) {
             System.out.print("━━━");
-            if (c < COLS - 1) {
-                System.out.print("╋");
-            }
+            if (c < COLS - 1) System.out.print("╋");
         }
         System.out.println("┫");
     }
@@ -239,9 +212,7 @@ public class ValorBoard {
         System.out.print("┗");
         for (int c = 0; c < COLS; c++) {
             System.out.print("━━━");
-            if (c < COLS - 1) {
-                System.out.print("┻");
-            }
+            if (c < COLS - 1) System.out.print("┻");
         }
         System.out.println("┛");
     }
@@ -250,11 +221,17 @@ public class ValorBoard {
      * Decide what symbol to show in a cell.
      *
      * Priority:
+     *   0) BOTH (yellow '*')
      *   1) Hero (cyan 'H')
      *   2) Monster (red 'M')
      *   3) Terrain type (N, X, O, B, C, K, .)
      */
     private String getCellSymbol(ValorTile tile, int row) {
+
+        // ✅ 0) BOTH present?
+        if (tile.hasHero() && tile.hasMonster()) {
+            return color(YELLOW, "*");
+        }
 
         // 1) Hero present?
         if (tile.hasHero()) {
@@ -272,9 +249,7 @@ public class ValorBoard {
         switch (type) {
             case NEXUS:
                 // Monsters' nexus (top row) red, heroes' nexus (bottom row) blue
-                return (row == 0)
-                        ? color(RED, "N")
-                        : color(BLUE, "N");
+                return (row == 0) ? color(RED, "N") : color(BLUE, "N");
             case INACCESSIBLE:
                 return color(WHITE, "X");
             case OBSTACLE:
@@ -296,16 +271,14 @@ public class ValorBoard {
     }
 
     // =========================================================
-    //  VICTORY CHECKS
+    // VICTORY CHECKS
     // =========================================================
 
     /** Heroes win if any hero stands on the monsters' Nexus row (row 0). */
     public boolean heroesReachedEnemyNexus() {
         int monstersRow = 0;
         for (int c = 0; c < COLS; c++) {
-            if (grid[monstersRow][c].hasHero()) {
-                return true;
-            }
+            if (grid[monstersRow][c].hasHero()) return true;
         }
         return false;
     }
@@ -314,9 +287,7 @@ public class ValorBoard {
     public boolean monstersReachedHeroesNexus() {
         int heroesRow = ROWS - 1;
         for (int c = 0; c < COLS; c++) {
-            if (grid[heroesRow][c].hasMonster()) {
-                return true;
-            }
+            if (grid[heroesRow][c].hasMonster()) return true;
         }
         return false;
     }

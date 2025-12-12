@@ -1,12 +1,13 @@
 package legends.valor.game;
 
-import java.util.Scanner;
+import java.util.*;
 
 import legends.game.Game;
 import legends.leaderboard.LeaderboardService;
 import legends.persistence.SaveManager;
 import legends.stats.GameStats;
 import legends.valor.ui.ValorEndScreenRenderer;
+import legends.characters.Hero;
 
 /**
  * Facade / entry-point for Legends of Valor.
@@ -55,6 +56,15 @@ public class ValorGame implements Game {
             if (line.startsWith("Y")) return true;
             if (line.startsWith("N")) return false;
             System.out.println("Please enter Y or N.");
+        }
+    }
+
+    private void endOfRound(List<Hero> heroes) {
+        for (Hero h : heroes) {
+            if (h.getHP() > 0) {
+                h.setHP(h.getHP() * 1.1);
+                h.setMP(h.getMP() * 1.1);
+            }
         }
     }
 }

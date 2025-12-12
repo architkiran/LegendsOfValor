@@ -147,13 +147,7 @@ public abstract class Hero extends Entity {
                 + ", Gold: " + gold + "]";
     }
 
-    // Check if hero has enough mana to cast a spell
-    public boolean canCast(Spell spell) {
-        return this.mp >= spell.getManaCost();
-    }
+    public boolean canCast(Spell spell) { return spell != null && mp >= spell.getManaCost(); }
+    public void spendMana(double amount) { mp = Math.max(0, mp - amount); }
 
-    // Deduct mana after spellcasting
-    public void spendMana(double amount) {
-        this.mp -= amount;
-    }
 }

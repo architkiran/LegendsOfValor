@@ -9,6 +9,8 @@ import legends.stats.HeroStats;
 
 import java.util.ArrayList;
 import java.util.List;
+import legends.items.Spell;
+import legends.items.SpellType;
 
 /**
  * Pure combat helper for Legends of Valor.
@@ -205,6 +207,105 @@ public class ValorCombat {
     }
 
     // =========================================================
+//  SPELL CASTING (Valor)
+// =========================================================
+
+    /**
+     * Hero casts a spell on a target monster (must be in range).
+     *
+     * Rules:
+     *  - Must have enough mana
+     *  - Target must be in attack range (same tile or N/S/E/W)
+     *  - Target may dodge using getDodgeChance()
+     *  - Damage formula matches your BattleState:
+     *      raw = base + (heroDexterity / 10000) * base
+     *  - Apply 10% debuff based on spell type (also matches BattleState)
+     *
+     * @return true if a valid spell action happened, false otherwise.
+     */
+    public boolean heroCastSpell(Hero hero, Spell spell, Monster target) {
+        if (hero == null || spell == null || target == null) return false;
+        if (hero.getHP() <= 0 || target.getHP() <= 0) return false;
+
+        // must be in range
+        List<Monster> inRange = getMonstersInRange(hero);
+        if (!inRange.contains(target)) {
+            System.out.println("Target is not in range.");
+            return false;
+        }
+
+        // mana check (Hero already has mp field; BattleState uses hero.canCast + spendMana)
+        if (!hero.canCast(spell)) {                  // if you haven't added canCast yet, see note below
+            System.out.println("Not enough mana!");
+            return false;
+        }
+
+        hero.spendMana(spell.getManaCost());
+
+        // monster dodge
+        if (Math.random() < target.getDodgeChance()) {
+            System.out.println(target.getName() + " dodged the spell!");
+            return true; // action consumed
+        }
+
+        // compute damage (matches BattleState formula)
+        double base = spell.getDamage();
+        double raw = base + (hero.getDexterity() / 10000.0) * base;
+        int dmg = (int) Math.round(raw);
+
+        // apply debuff (10%)
+        applySpellEffect(spell, target);
+
+        // stats: damage dealt
+        HeroStats hs = safeHeroStats(hero);
+        if (hs != null) {
+            hs.addDamageDealt(dmg);
+        }
+
+        target.takeDamage(dmg);
+        System.out.println(hero.getName() + " casts " + spell.getName()
+                + " on " + target.getName() + " for " + dmg + " damage!");
+
+        if (target.getHP() <= 0) {
+            System.out.println(target.getName() + " has been slain!");
+            if (hs != null) hs.addKill();
+            removeMonsterFromBoard(target);
+        }
+
+        return true;
+    }
+
+    private void applySpellEffect(Spell spell, Monster target) {
+        if (spell == null || target == null) return;
+
+        double val;
+        switch (spell.getType()) {
+            case FIRE -> {
+                // Fire lowers defense by 10%
+                val = target.getDefense();
+                target.setDefense(Math.max(0, val - val * 0.1));
+                // or: target.applyFireDebuff(val * 0.1);  (Monster提供了这个API :contentReference[oaicite:3]{index=3})
+                System.out.println("🔥 " + target.getName() + "'s defense reduced!");
+            }
+            case ICE -> {
+                // Ice lowers damage by 10%
+                val = target.getDamage();
+                target.setDamage(Math.max(0, val - val * 0.1));
+                // or: target.applyIceDebuff(val * 0.1);
+                System.out.println("❄️ " + target.getName() + "'s damage reduced!");
+            }
+            case LIGHTNING -> {
+                // Lightning lowers dodge chance by 10%
+                val = target.getDodgeChance();
+                target.setDodgeChance(Math.max(0, val - val * 0.1));
+                // or: target.applyLightningDebuff(val * 0.1);
+                System.out.println("⚡ " + target.getName() + "'s dodge reduced!");
+            }
+        }
+    }
+
+
+    // =========================================================
     //  STATS HELPERS
     // =========================================================
 
@@ -256,4 +357,28 @@ public class ValorCombat {
         if (pos == null) return;
         board.getTile(pos[0], pos[1]).removeMonster();
     }
+
+    private void applySpellDebuff(Monster m, SpellType type) {
+        if (m == null || type == null) return;
+
+        // If your Monster has different APIs, tell me its methods and I'll adapt.
+        switch (type) {
+            case FIRE -> {
+                // reduce damage
+                m.setDamage(m.getDamage() * 0.9);
+                System.out.println(m.getName() + "'s damage is reduced!");
+            }
+            case ICE -> {
+                // reduce defense
+                m.setDefense(m.getDefense() * 0.9);
+                System.out.println(m.getName() + "'s defense is reduced!");
+            }
+            case LIGHTNING -> {
+                // reduce dodge chance
+                m.setDodgeChance(m.getDodgeChance() * 0.9);
+                System.out.println(m.getName() + "'s dodge chance is reduced!");
+            }
+        }
+    }
+
 }
