@@ -4,6 +4,8 @@ import legends.valor.world.ValorBoard;
 import legends.valor.world.ValorTile;
 import legends.characters.Hero;
 import legends.characters.Monster;
+import legends.stats.GameStats;
+import legends.stats.HeroStats;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,9 +33,11 @@ import java.util.List;
 public class ValorCombat {
 
     private final ValorBoard board;
+    private final GameStats gameStats;
 
-    public ValorCombat(ValorBoard board) {
+    public ValorCombat(ValorBoard board, GameStats gameStats) {
         this.board = board;
+        this.gameStats = gameStats;
     }
 
     // =========================================================
@@ -127,10 +131,14 @@ public class ValorCombat {
         }
 
         // Damage formula copied from your BattleState:
-        //   raw = hero.getAttackDamage()
-        //   dmg = round(raw)
         double raw = hero.getAttackDamage();
         int dmg = (int) Math.round(raw);
+
+        // ✅ Stats: damage dealt by hero
+        HeroStats hs = safeHeroStats(hero);
+        if (hs != null) {
+            hs.addDamageDealt(dmg);
+        }
 
         monster.takeDamage(dmg);
         System.out.println(hero.getName() + " hits " + monster.getName()
@@ -138,6 +146,12 @@ public class ValorCombat {
 
         if (monster.getHP() <= 0) {
             System.out.println(monster.getName() + " has been slain!");
+
+            // ✅ Stats: hero kill
+            if (hs != null) {
+                hs.addKill();
+            }
+
             removeMonsterFromBoard(monster);
             return true;
         }
@@ -162,10 +176,14 @@ public class ValorCombat {
         }
 
         // Damage formula copied from your BattleState:
-        //   base = monster.getDamage()
-        //   dmg  = round(base * 0.3)
         double base = monster.getDamage();
         int dmg = (int) Math.round(base * 0.3);
+
+        // ✅ Stats: damage taken by hero
+        HeroStats hs = safeHeroStats(hero);
+        if (hs != null) {
+            hs.addDamageTaken(dmg);
+        }
 
         hero.takeDamage(dmg);
         System.out.println(monster.getName() + " hits " + hero.getName()
@@ -173,12 +191,30 @@ public class ValorCombat {
 
         if (hero.getHP() <= 0) {
             System.out.println(hero.getName() + " has fallen!");
+
+            // ✅ Stats: hero fainted
+            if (hs != null) {
+                hs.addFaint();
+            }
+
             removeHeroFromBoard(hero);
-            // (respawn logic will be handled elsewhere according to PDF rules)
             return true;
         }
 
         return false;
+    }
+
+    // =========================================================
+    //  STATS HELPERS
+    // =========================================================
+
+    private HeroStats safeHeroStats(Hero hero) {
+        if (gameStats == null || hero == null) return null;
+        try {
+            return gameStats.statsFor(hero);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // =========================================================

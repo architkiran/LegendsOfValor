@@ -1,67 +1,71 @@
 package legends.valor.turn;
 
+import java.util.List;
+
 import legends.characters.Hero;
 import legends.characters.Monster;
 import legends.characters.Party;
+import legends.valor.combat.ValorCombat;
+import legends.valor.game.ValorMatch;
+import legends.valor.game.ValorMonsterAI;
 import legends.valor.world.ValorBoard;
 import legends.valor.world.ValorMovement;
 
-import java.util.List;
-
-/**
- * Orchestrates the round-based flow:
- *   Hero 1 → Hero 2 → Hero 3 → all monsters → repeat.
- */
 public class ValorTurnManager {
 
     private final ValorBoard board;
     private final ValorMovement movement;
+    private final ValorCombat combat;
+
     private final Party party;
     private final List<Monster> laneMonsters;
 
-    private final HeroTurnController heroController;
-    private final MonsterTurnController monsterController;
+    private final HeroTurnController heroTurnController;
+    private final MonsterTurnController monsterTurnController;
 
     public ValorTurnManager(ValorBoard board,
                             ValorMovement movement,
+                            ValorCombat combat,
                             Party party,
-                            List<Monster> laneMonsters) {
-
+                            List<Monster> laneMonsters,
+                            ValorInput input) {
         this.board = board;
         this.movement = movement;
+        this.combat = combat;
         this.party = party;
         this.laneMonsters = laneMonsters;
 
-        ValorInput input = new ConsoleValorInput();
-        this.heroController = new HeroTurnController(board, movement, party, laneMonsters, input);
-        this.monsterController = new MonsterTurnController(movement);
+        this.heroTurnController = new HeroTurnController(board, movement, combat, laneMonsters, input);
+        this.monsterTurnController = new MonsterTurnController(combat, new ValorMonsterAI(board, movement));
     }
 
     /**
-     * Main loop for Legends of Valor.
-     * Returns when the player quits (Q).
+     * @return Outcome if match ended this round, else null to continue.
      */
-    public void run() {
+    public ValorMatch.Outcome playOneRound() {
         List<Hero> heroes = party.getHeroes();
-        if (heroes.isEmpty()) {
-            System.out.println("Party has no heroes, cannot move.");
-            return;
-        }
+        if (heroes.isEmpty()) return ValorMatch.Outcome.QUIT;
 
-        while (true) {
-            // ----- HERO PHASE -----
-            for (int i = 0; i < heroes.size(); i++) {
-                Hero h = heroes.get(i);
+        // HERO PHASE
+        for (int i = 0; i < heroes.size(); i++) {
+            Hero h = heroes.get(i);
+            if (h.getHP() <= 0) continue;
 
-                boolean continueGame = heroController.handleHeroTurn(h, i + 1);
-                if (!continueGame) {
-                    System.out.println("Exiting Legends of Valor...");
-                    return;
-                }
+            boolean ok = heroTurnController.handleHeroTurn(h, i + 1);
+            if (!ok) return ValorMatch.Outcome.QUIT;
+
+            if (board.heroesReachedEnemyNexus()) {
+                return ValorMatch.Outcome.HERO_WIN;
             }
-
-            // ----- MONSTER PHASE -----
-            monsterController.advanceMonsters(laneMonsters);
         }
+
+        // MONSTER PHASE
+        monsterTurnController.monstersPhase(laneMonsters);
+
+        if (board.monstersReachedHeroesNexus()) {
+            return ValorMatch.Outcome.MONSTER_WIN;
+        }
+
+        return null;
     }
 }

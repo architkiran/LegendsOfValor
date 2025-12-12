@@ -171,9 +171,11 @@ public class ValorBoard {
     }
 
     public int[] getMonsterSpawnCell(int lane) {
-        int[] cols = getNexusColumnsForLane(lane);
-        return new int[]{0, cols[0]};
-    }
+    int[] cols = getNexusColumnsForLane(lane);
+    // PDF rule: monsters spawn in the RIGHT space of their lane’s Nexus
+    if (cols.length < 2) return new int[]{0, cols[0]};
+    return new int[]{0, cols[1]};
+}
 
     // =========================================================
     //  PRINTING — thick white grid like Monsters & Heroes map

@@ -1,45 +1,40 @@
 package legends.valor.turn;
 
-import legends.characters.Monster;
-import legends.valor.world.ValorMovement;
-import legends.valor.world.ValorDirection;
-
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Controls how monsters advance each round in Legends of Valor.
- */
+import legends.characters.Hero;
+import legends.characters.Monster;
+import legends.valor.combat.ValorCombat;
+import legends.valor.game.ValorMonsterAI;
+
+import static legends.ui.ConsoleUI.*;
+
 public class MonsterTurnController {
 
-    private final ValorMovement movement;
+    private final ValorCombat combat;
+    private final ValorMonsterAI ai;
 
-    public MonsterTurnController(ValorMovement movement) {
-        this.movement = movement;
+    public MonsterTurnController(ValorCombat combat, ValorMonsterAI ai) {
+        this.combat = combat;
+        this.ai = ai;
     }
 
-    /**
-     * One "monsters' phase": each lane monster tries to advance once.
-     */
-    public void advanceMonsters(List<Monster> laneMonsters) {
+    public void monstersPhase(List<Monster> laneMonsters) {
         if (laneMonsters == null || laneMonsters.isEmpty()) return;
 
         System.out.println();
-        System.out.println("\u001B[91mMonsters advance toward your Nexus...\u001B[0m");
+        System.out.println(RED + "Monsters advance toward your Nexus..." + RESET);
 
-        for (Monster m : laneMonsters) {
-            if (m == null) continue;  // in case some lane has no monster
+        for (Monster m : new ArrayList<>(laneMonsters)) {
+            if (m == null || m.getHP() <= 0) continue;
 
-            // super simple AI: try SOUTH then sideways
-            boolean moved =
-                    tryMove(m, ValorDirection.SOUTH) ||
-                    tryMove(m, ValorDirection.WEST)  ||
-                    tryMove(m, ValorDirection.EAST);
-
-            // if all three fail, the monster stays in place this round
+            List<Hero> heroesInRange = combat.getHeroesInRange(m);
+            if (!heroesInRange.isEmpty()) {
+                combat.monsterAttack(m, heroesInRange.get(0));
+            } else {
+                ai.advanceMonster(m);
+            }
         }
-    }
-
-    private boolean tryMove(Monster m, ValorDirection dir) {
-        return movement.moveMonster(m, dir);
     }
 }
