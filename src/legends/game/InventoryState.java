@@ -17,6 +17,7 @@ package legends.game;
 import legends.characters.*;
 import legends.items.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -58,9 +59,9 @@ public class InventoryState implements GameState {
     private void printHeroSelection() {
         List<Hero> heroes = game.getParty().getHeroes();
 
-        System.out.println("\n╔" + "═".repeat(WIDTH) + "╗");
+        System.out.println("\n╔" + repeat("═", WIDTH) + "╗");
         System.out.println("║" + center(CYAN + "INVENTORY MENU" + RESET, WIDTH) + "║");
-        System.out.println("╠" + "═".repeat(WIDTH) + "╣");
+        System.out.println("╠" + repeat("═", WIDTH) + "╣");
 
         // Print each hero with basic stats
         for (int i = 0; i < heroes.size(); i++) {
@@ -75,22 +76,22 @@ public class InventoryState implements GameState {
         }
 
         System.out.println("║ " + pad("B. Back to Map", WIDTH - 2) + " ║");
-        System.out.println("╚" + "═".repeat(WIDTH) + "╝");
+        System.out.println("╚" + repeat("═", WIDTH) + "╝");
         System.out.print("Enter choice: ");
     }
 
     // HERO INVENTORY VIEW — shows equipment + actions for the chosen hero
     private void printHeroInventory(Hero h) {
 
-        System.out.println("\n╔" + "═".repeat(WIDTH) + "╗");
+        System.out.println("\n╔" + repeat("═", WIDTH) + "╗");
         System.out.println("║" + center(YELLOW + h.getName() + "'s INVENTORY" + RESET, WIDTH) + "║");
-        System.out.println("╠" + "═".repeat(WIDTH) + "╣");
+        System.out.println("╠" + repeat("═", WIDTH) + "╣");
 
         // Print full inventory contents formatted to WIDTH
         h.getInventory().printFormatted(WIDTH);
 
         // Separator before action buttons
-        System.out.println("╠" + "─".repeat(WIDTH) + "╣");
+        System.out.println("╠" + repeat("─", WIDTH) + "╣");
 
         // Inventory options
         System.out.println("║ " + pad("1. Equip Weapon", WIDTH - 2) + " ║");
@@ -98,7 +99,7 @@ public class InventoryState implements GameState {
         System.out.println("║ " + pad("3. Drink Potion", WIDTH - 2) + " ║");
         System.out.println("║ " + pad("B. Back", WIDTH - 2) + " ║");
 
-        System.out.println("╚" + "═".repeat(WIDTH) + "╝");
+        System.out.println("╚" + repeat("═", WIDTH) + "╝");
         System.out.print("Enter choice: ");
     }
 
@@ -137,13 +138,23 @@ public class InventoryState implements GameState {
             return;
         }
 
-        // CASE 2 — Hero is selected → perform inventory actions
+        // CASE 2 — Hero is selected → perform inventory actions (Java 8 switch)
         switch (input) {
-            case "1" -> equipWeapon(selectedHero);
-            case "2" -> equipArmor(selectedHero);
-            case "3" -> drinkPotion(selectedHero);
-            case "B" -> selectedHero = null;  // Return to hero list
-            default -> System.out.println("Invalid input.");
+            case "1":
+                equipWeapon(selectedHero);
+                break;
+            case "2":
+                equipArmor(selectedHero);
+                break;
+            case "3":
+                drinkPotion(selectedHero);
+                break;
+            case "B":
+                selectedHero = null;  // Return to hero list
+                break;
+            default:
+                System.out.println("Invalid input.");
+                break;
         }
     }
 
@@ -152,9 +163,10 @@ public class InventoryState implements GameState {
 
     // EQUIP WEAPON — lets hero equip any weapon in their inventory
     private void equipWeapon(Hero hero) {
-        List<Weapon> weapons = hero.getInventory().getItems()
-                .stream().filter(i -> i instanceof Weapon)
-                .map(i -> (Weapon)i).toList();
+        List<Weapon> weapons = new ArrayList<Weapon>();
+        for (Item i : hero.getInventory().getItems()) {
+            if (i instanceof Weapon) weapons.add((Weapon) i);
+        }
 
         if (weapons.isEmpty()) { System.out.println("No weapons available."); return; }
 
@@ -172,9 +184,10 @@ public class InventoryState implements GameState {
     // EQUIP ARMOR — equips the chosen armor item
     private void equipArmor(Hero hero) {
 
-        List<Armor> armors = hero.getInventory().getItems()
-                .stream().filter(i -> i instanceof Armor)
-                .map(i -> (Armor)i).toList();
+        List<Armor> armors = new ArrayList<Armor>();
+        for (Item i : hero.getInventory().getItems()) {
+            if (i instanceof Armor) armors.add((Armor) i);
+        }
 
         if (armors.isEmpty()) { System.out.println("No armor available."); return; }
 
@@ -192,9 +205,10 @@ public class InventoryState implements GameState {
     // DRINK POTION — applies potion effects and removes the used potion
     private void drinkPotion(Hero hero) {
 
-        List<Potion> potions = hero.getInventory().getItems()
-                .stream().filter(i -> i instanceof Potion)
-                .map(i -> (Potion)i).toList();
+        List<Potion> potions = new ArrayList<Potion>();
+        for (Item i : hero.getInventory().getItems()) {
+            if (i instanceof Potion) potions.add((Potion) i);
+        }
 
         if (potions.isEmpty()) { System.out.println("No potions available."); return; }
 
@@ -222,7 +236,7 @@ public class InventoryState implements GameState {
     // Centers text taking ANSI color codes into account
     private String center(String text, int width) {
         int pad = (width - stripColor(text).length()) / 2;
-        return " ".repeat(pad) + text + " ".repeat(width - pad - stripColor(text).length());
+        return repeat(" ", pad) + text + repeat(" ", width - pad - stripColor(text).length());
     }
 
     // Removes color codes for consistent alignment
@@ -233,6 +247,13 @@ public class InventoryState implements GameState {
     // Pads text to fixed width for box formatting
     private String pad(String text, int width) {
         int diff = width - stripColor(text).length();
-        return text + " ".repeat(Math.max(diff, 0));
+        return text + repeat(" ", Math.max(diff, 0));
+    }
+
+    // Java 8 replacement for String.repeat(...)
+    private String repeat(String s, int count) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < count; i++) sb.append(s);
+        return sb.toString();
     }
 }

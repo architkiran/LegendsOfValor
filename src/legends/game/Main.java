@@ -1,7 +1,8 @@
 package legends.game;
 
 /**
- * Entry point of the Legends of Valor game.
+ * Entry point of the complete Legends of Valor and Monsters & Heroes application.1
+ * 
  * This class simply initializes the game engine and starts execution.
  * 
  * Main responsibilities:

@@ -85,4 +85,6 @@ public class ConsoleValorInput implements ValorInput {
         if (killed) laneMonsters.remove(target);
         return true;
     }
+
+
 }

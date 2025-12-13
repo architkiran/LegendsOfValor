@@ -59,12 +59,4 @@ public class ValorGame implements Game {
         }
     }
 
-    private void endOfRound(List<Hero> heroes) {
-        for (Hero h : heroes) {
-            if (h.getHP() > 0) {
-                h.setHP(h.getHP() * 1.1);
-                h.setMP(h.getMP() * 1.1);
-            }
-        }
-    }
 }
