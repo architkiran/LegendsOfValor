@@ -70,11 +70,26 @@ public class ValorMovement {
         if (!board.inBounds(toR, toC)) return false;
         if (!board.getTile(toR, toC).isEmptyForHero()) return false;
 
-        // Still cannot bypass monsters.
-        if (wouldHeroBypassMonster(fromR, fromC, toR, toC)) return false;
+        int fromLane = board.getLane(fromC);
+        int toLane   = board.getLane(toC);
+        if (fromLane == -1 || toLane == -1) return false;
+
+        // 1) If staying in same lane, reuse normal "cannot bypass monster" rule.
+        if (fromLane == toLane) {
+            if (wouldHeroBypassMonster(fromR, fromC, toR, toC)) return false;
+            return true;
+        }
+
+        // 2) If teleporting to a DIFFERENT lane:
+        //    You still may NOT land "behind" a monster in the destination lane.
+        //    Interpret "behind" as: you cannot land ABOVE (smaller row) than the
+        //    closest monster to the heroes in that lane.
+        int blockRowDest = closestBlockingMonsterRow(ValorBoard.ROWS, toLane);
+        if (blockRowDest != Integer.MIN_VALUE && toR < blockRowDest) return false;
 
         return true;
     }
+
 
     public void teleportHeroTo(Hero hero, int toR, int toC) {
         int[] pos = findHero(hero);
