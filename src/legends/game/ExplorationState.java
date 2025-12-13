@@ -1,5 +1,5 @@
 /**
- * ExplorationState handles overworld movement, map interactions, and 
+ * ExplorationState handles overworld movement, map interactions, and
  * transitions into other game states such as Market or Battle.
  *
  * Responsibilities:

@@ -41,9 +41,8 @@ public class ValorTurnManager {
         this.laneMonsters = laneMonsters;
 
         // IMPORTANT: your HeroTurnController constructor is 5 args
-        this.heroTurnController = new HeroTurnController(board, movement, combat, laneMonsters, input);
-        this.monsterTurnController = new MonsterTurnController(combat, new ValorMonsterAI(board, movement));
-    }
+        this.heroTurnController = new HeroTurnController(board, movement, combat, laneMonsters, input, homeLane);
+        this.monsterTurnController = new MonsterTurnController(combat, new ValorMonsterAI(board, movement));}
 
     /**
      * @return Outcome if match ended this round, else null to continue.

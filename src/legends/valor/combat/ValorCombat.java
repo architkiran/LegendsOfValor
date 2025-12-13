@@ -9,8 +9,8 @@ import legends.stats.HeroStats;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import legends.items.Spell;
-import legends.items.SpellType;
 
 /**
  * Pure combat helper for Legends of Valor.
@@ -55,9 +55,7 @@ public class ValorCombat {
             { 0,  1}    // east
     };
 
-    /**
-     * All monsters that a given hero can attack this turn, based on range.
-     */
+    /** All monsters that a given hero can attack this turn, based on range. */
     public List<Monster> getMonstersInRange(Hero hero) {
         List<Monster> result = new ArrayList<>();
 
@@ -67,8 +65,7 @@ public class ValorCombat {
         int r0 = pos[0];
         int c0 = pos[1];
 
-        for (int i = 0; i < NEIGHBOR_OFFSETS.length; i++) {
-            int[] d = NEIGHBOR_OFFSETS[i];
+        for (int[] d : NEIGHBOR_OFFSETS) {
             int r = r0 + d[0];
             int c = c0 + d[1];
             if (!board.inBounds(r, c)) continue;
@@ -83,9 +80,7 @@ public class ValorCombat {
         return result;
     }
 
-    /**
-     * All heroes that a given monster can attack this turn, based on range.
-     */
+    /** All heroes that a given monster can attack this turn, based on range. */
     public List<Hero> getHeroesInRange(Monster monster) {
         List<Hero> result = new ArrayList<>();
 
@@ -95,8 +90,7 @@ public class ValorCombat {
         int r0 = pos[0];
         int c0 = pos[1];
 
-        for (int i = 0; i < NEIGHBOR_OFFSETS.length; i++) {
-            int[] d = NEIGHBOR_OFFSETS[i];
+        for (int[] d : NEIGHBOR_OFFSETS) {
             int r = r0 + d[0];
             int c = c0 + d[1];
             if (!board.inBounds(r, c)) continue;
@@ -115,32 +109,22 @@ public class ValorCombat {
     //  ATTACK RESOLUTION
     // =========================================================
 
-    /**
-     * Hero performs a basic physical attack on a monster.
-     *
-     * @return true if the monster DIES as a result, false otherwise.
-     */
+    /** @return true if the monster DIES as a result, false otherwise. */
     public boolean heroAttack(Hero hero, Monster monster) {
         if (monster.getHP() <= 0) {
             System.out.println(monster.getName() + " is already defeated.");
             return false;
         }
 
-        // Dodge check (same as Monsters & Heroes)
         if (Math.random() < monster.getDodgeChance()) {
             System.out.println(monster.getName() + " dodged the attack!");
             return false;
         }
 
-        // Damage formula copied from your BattleState:
-        double raw = hero.getAttackDamage();
-        int dmg = (int) Math.round(raw);
+        int dmg = (int) Math.round(hero.getAttackDamage());
 
-        // ✅ Stats: damage dealt by hero
         HeroStats hs = safeHeroStats(hero);
-        if (hs != null) {
-            hs.addDamageDealt(dmg);
-        }
+        if (hs != null) hs.addDamageDealt(dmg);
 
         monster.takeDamage(dmg);
         System.out.println(hero.getName() + " hits " + monster.getName()
@@ -148,12 +132,7 @@ public class ValorCombat {
 
         if (monster.getHP() <= 0) {
             System.out.println(monster.getName() + " has been slain!");
-
-            // ✅ Stats: hero kill
-            if (hs != null) {
-                hs.addKill();
-            }
-
+            if (hs != null) hs.addKill();
             removeMonsterFromBoard(monster);
             return true;
         }
@@ -161,31 +140,19 @@ public class ValorCombat {
         return false;
     }
 
-    /**
-     * Monster performs a basic attack on a hero.
-     *
-     * @return true if the hero DIES as a result, false otherwise.
-     */
+    /** @return true if the hero DIES as a result, false otherwise. */
     public boolean monsterAttack(Monster monster, Hero hero) {
-        if (hero.getHP() <= 0) {
-            return false;
-        }
+        if (hero.getHP() <= 0) return false;
 
-        // Hero dodge chance (same as Monsters & Heroes battle)
         if (Math.random() < hero.getDodgeChance()) {
             System.out.println(hero.getName() + " dodged " + monster.getName() + "'s attack!");
             return false;
         }
 
-        // Damage formula copied from your BattleState:
-        double base = monster.getDamage();
-        int dmg = (int) Math.round(base * 0.3);
+        int dmg = (int) Math.round(monster.getDamage() * 0.3);
 
-        // ✅ Stats: damage taken by hero
         HeroStats hs = safeHeroStats(hero);
-        if (hs != null) {
-            hs.addDamageTaken(dmg);
-        }
+        if (hs != null) hs.addDamageTaken(dmg);
 
         hero.takeDamage(dmg);
         System.out.println(monster.getName() + " hits " + hero.getName()
@@ -193,12 +160,7 @@ public class ValorCombat {
 
         if (hero.getHP() <= 0) {
             System.out.println(hero.getName() + " has fallen!");
-
-            // ✅ Stats: hero fainted
-            if (hs != null) {
-                hs.addFaint();
-            }
-
+            if (hs != null) hs.addFaint();
             removeHeroFromBoard(hero);
             return true;
         }
@@ -207,19 +169,11 @@ public class ValorCombat {
     }
 
     // =========================================================
-//  SPELL CASTING (Valor)
-// =========================================================
+    //  SPELL CASTING (Valor)
+    // =========================================================
 
     /**
      * Hero casts a spell on a target monster (must be in range).
-     *
-     * Rules:
-     *  - Must have enough mana
-     *  - Target must be in attack range (same tile or N/S/E/W)
-     *  - Target may dodge using getDodgeChance()
-     *  - Damage formula matches your BattleState:
-     *      raw = base + (heroDexterity / 10000) * base
-     *  - Apply 10% debuff based on spell type (also matches BattleState)
      *
      * @return true if a valid spell action happened, false otherwise.
      */
@@ -227,40 +181,32 @@ public class ValorCombat {
         if (hero == null || spell == null || target == null) return false;
         if (hero.getHP() <= 0 || target.getHP() <= 0) return false;
 
-        // must be in range
         List<Monster> inRange = getMonstersInRange(hero);
         if (!inRange.contains(target)) {
             System.out.println("Target is not in range.");
             return false;
         }
 
-        // mana check (Hero already has mp field; BattleState uses hero.canCast + spendMana)
-        if (!hero.canCast(spell)) {                  // if you haven't added canCast yet, see note below
+        if (!hero.canCast(spell)) {
             System.out.println("Not enough mana!");
             return false;
         }
 
         hero.spendMana(spell.getManaCost());
 
-        // monster dodge
         if (Math.random() < target.getDodgeChance()) {
             System.out.println(target.getName() + " dodged the spell!");
             return true; // action consumed
         }
 
-        // compute damage (matches BattleState formula)
         double base = spell.getDamage();
         double raw = base + (hero.getDexterity() / 10000.0) * base;
         int dmg = (int) Math.round(raw);
 
-        // apply debuff (10%)
         applySpellEffect(spell, target);
 
-        // stats: damage dealt
         HeroStats hs = safeHeroStats(hero);
-        if (hs != null) {
-            hs.addDamageDealt(dmg);
-        }
+        if (hs != null) hs.addDamageDealt(dmg);
 
         target.takeDamage(dmg);
         System.out.println(hero.getName() + " casts " + spell.getName()
@@ -281,29 +227,22 @@ public class ValorCombat {
         double val;
         switch (spell.getType()) {
             case FIRE -> {
-                // Fire lowers defense by 10%
                 val = target.getDefense();
                 target.setDefense(Math.max(0, val - val * 0.1));
-                // or: target.applyFireDebuff(val * 0.1);  (Monster提供了这个API :contentReference[oaicite:3]{index=3})
                 System.out.println("🔥 " + target.getName() + "'s defense reduced!");
             }
             case ICE -> {
-                // Ice lowers damage by 10%
                 val = target.getDamage();
                 target.setDamage(Math.max(0, val - val * 0.1));
-                // or: target.applyIceDebuff(val * 0.1);
                 System.out.println("❄️ " + target.getName() + "'s damage reduced!");
             }
             case LIGHTNING -> {
-                // Lightning lowers dodge chance by 10%
                 val = target.getDodgeChance();
                 target.setDodgeChance(Math.max(0, val - val * 0.1));
-                // or: target.applyLightningDebuff(val * 0.1);
                 System.out.println("⚡ " + target.getName() + "'s dodge reduced!");
             }
         }
     }
-
 
     // =========================================================
     //  STATS HELPERS
@@ -326,9 +265,7 @@ public class ValorCombat {
         for (int r = 0; r < ValorBoard.ROWS; r++) {
             for (int c = 0; c < ValorBoard.COLS; c++) {
                 ValorTile tile = board.getTile(r, c);
-                if (tile.getHero() == hero) {
-                    return new int[]{r, c};
-                }
+                if (tile.getHero() == hero) return new int[]{r, c};
             }
         }
         return null;
@@ -338,9 +275,7 @@ public class ValorCombat {
         for (int r = 0; r < ValorBoard.ROWS; r++) {
             for (int c = 0; c < ValorBoard.COLS; c++) {
                 ValorTile tile = board.getTile(r, c);
-                if (tile.getMonster() == monster) {
-                    return new int[]{r, c};
-                }
+                if (tile.getMonster() == monster) return new int[]{r, c};
             }
         }
         return null;
@@ -357,28 +292,4 @@ public class ValorCombat {
         if (pos == null) return;
         board.getTile(pos[0], pos[1]).removeMonster();
     }
-
-    private void applySpellDebuff(Monster m, SpellType type) {
-        if (m == null || type == null) return;
-
-        // If your Monster has different APIs, tell me its methods and I'll adapt.
-        switch (type) {
-            case FIRE -> {
-                // reduce damage
-                m.setDamage(m.getDamage() * 0.9);
-                System.out.println(m.getName() + "'s damage is reduced!");
-            }
-            case ICE -> {
-                // reduce defense
-                m.setDefense(m.getDefense() * 0.9);
-                System.out.println(m.getName() + "'s defense is reduced!");
-            }
-            case LIGHTNING -> {
-                // reduce dodge chance
-                m.setDodgeChance(m.getDodgeChance() * 0.9);
-                System.out.println(m.getName() + "'s dodge chance is reduced!");
-            }
-        }
-    }
-
 }

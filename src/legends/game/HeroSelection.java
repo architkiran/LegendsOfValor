@@ -1,3 +1,24 @@
+/**
+ * File: HeroSelection.java
+ * Package: legends.game
+ *
+ * Description:
+ * Handles the interactive hero selection process at the start of the game.
+ * This class is responsible for:
+ * - Loading available heroes from the DataLoader
+ * - Displaying heroes grouped by class (Warrior, Paladin, Sorcerer)
+ * - Enforcing minimum and maximum party size constraints
+ * - Allowing the player to select heroes via a console-based menu
+ * - Constructing and returning a Party object containing the chosen heroes
+ *
+ * OOP / Design Notes:
+ * - Follows Single Responsibility Principle (SRP): focuses only on hero selection logic.
+ * - Separates data loading (DataLoader) from user interaction and validation.
+ * - Uses generics to apply shared initialization rules across different Hero subclasses.
+ * - Avoids modifying hero subclasses directly; interacts only through the Hero abstraction.
+ * - Designed to be reusable for different game modes by configuring party size bounds.
+ */
+
 package legends.game;
 
 import legends.characters.*;
@@ -7,19 +28,19 @@ import java.util.*;
 
 public class HeroSelection {
 
-    // ===== NEW: configurable party size =====
+    // Minimum and maximum number of heroes allowed in the party
     private final int minParty;
     private final int maxParty;
 
-    // Lists of heroes grouped by type for easy display and selection
+    // Lists of heroes grouped by type for display and selection
     private final List<Warrior>  warriors;
     private final List<Paladin>  paladins;
     private final List<Sorcerer> sorcerers;
 
-    // Single Scanner instance for user input
+    // Scanner used for reading user input during hero selection
     private final Scanner in = new Scanner(System.in);
 
-    // ANSI color codes used for formatting menu output
+    // ANSI color codes used for formatted console output
     private static final String RESET = "\u001B[0m";
     private static final String BOLD  = "\u001B[1m";
     private static final String BLUE  = "\u001B[94m";
@@ -27,18 +48,25 @@ public class HeroSelection {
     private static final String GREEN = "\u001B[92m";
     private static final String YELL  = "\u001B[93m";
     private static final String MAG   = "\u001B[95m";
-    private static final String RED   = "\u001B[91m";
+    private static final String RED_COLOR = "\u001B[91m";
 
     /**
-     * Default: allow between 1 and 3 heroes (used by Monsters & Heroes).
+     * Default constructor.
+     * Allows between 1 and 3 heroes (used by Monsters & Heroes mode).
+     *
+     * @param loader DataLoader used to load hero data
      */
     public HeroSelection(DataLoader loader) {
         this(loader, 1, 3);
     }
 
     /**
-     * Configurable constructor: allow between minParty and maxParty heroes.
-     * For Legends of Valor you’ll call this with (3, 3).
+     * Configurable constructor allowing custom party size constraints.
+     * For Legends of Valor, this is typically called with (3, 3).
+     *
+     * @param loader   DataLoader used to load hero data
+     * @param minParty minimum number of heroes required
+     * @param maxParty maximum number of heroes allowed
      */
     public HeroSelection(DataLoader loader, int minParty, int maxParty) {
         this.minParty = minParty;
@@ -48,17 +76,20 @@ public class HeroSelection {
         this.paladins  = loader.loadPaladins();
         this.sorcerers = loader.loadSorcerers();
 
-        // Apply PDF rules right away to all heroes
+        // Normalize hero HP/MP immediately based on PDF rules
         resetHeroStatsToPDF(warriors);
         resetHeroStatsToPDF(paladins);
         resetHeroStatsToPDF(sorcerers);
     }
 
     /**
-     * Enforces the HP/MP rules for each hero in a list.
+     * Resets HP and MP for a list of heroes according to the game rules.
      * PDF rules:
-     * HP = level × 100
-     * MP = level × 50
+     * - HP = level × 100
+     * - MP = level × 50
+     *
+     * @param heroes list of heroes whose stats should be normalized
+     * @param <T>    any subclass of Hero
      */
     private <T extends Hero> void resetHeroStatsToPDF(List<T> heroes) {
         for (Hero h : heroes) {
@@ -68,10 +99,11 @@ public class HeroSelection {
     }
 
     /**
-     * Core selection loop:
-     * - Displays all heroes
-     * - Lets the user pick [minParty .. maxParty]
-     * - Builds and returns a Party object
+     * Main hero selection loop.
+     * Repeatedly displays available heroes and prompts the user to select
+     * heroes until party size constraints are satisfied.
+     *
+     * @return Party containing the selected heroes
      */
     public Party selectHeroes() {
 
@@ -79,7 +111,7 @@ public class HeroSelection {
 
         while (true) {
 
-            // Print hero menu and get mapping from numbers → actual Hero object
+            // Display hero menu and build index-to-hero mapping
             Map<Integer, Hero> indexMap = printHeroMenu();
 
             System.out.println();
@@ -97,7 +129,7 @@ public class HeroSelection {
 
                 String line = in.nextLine().trim();
 
-                // User wants to finish
+                // User attempts to finish selection early
                 if (line.equals("0")) {
                     if (party.getHeroes().size() >= minParty) break;
                     System.out.println(RED("You must have at least " + minParty + " heroes."));
@@ -105,8 +137,9 @@ public class HeroSelection {
                 }
 
                 int choice;
-                try { choice = Integer.parseInt(line); }
-                catch (NumberFormatException e) {
+                try {
+                    choice = Integer.parseInt(line);
+                } catch (NumberFormatException e) {
                     System.out.println(RED("Invalid input. Enter a number."));
                     continue;
                 }
@@ -139,8 +172,12 @@ public class HeroSelection {
         return party;
     }
 
-    // ----------------- (rest of the class unchanged) -----------------
-
+    /**
+     * Prints the full hero selection menu and returns a mapping from
+     * displayed index numbers to actual Hero objects.
+     *
+     * @return map of menu index to Hero
+     */
     private Map<Integer, Hero> printHeroMenu() {
         Map<Integer, Hero> indexMap = new LinkedHashMap<>();
         int idx = 1;
@@ -157,7 +194,6 @@ public class HeroSelection {
                 String.format("%-4s %-20s %-4s %-6s %-6s %-6s %-6s %-6s",
                         "No", "Name", "Lvl", "HP", "MP", "STR", "DEX", "AGI") + RESET;
 
-        // Warriors
         if (!warriors.isEmpty()) {
             System.out.println(BLUE + "⚔️  WARRIORS — Strong melee fighters" + RESET);
             System.out.println(header);
@@ -169,7 +205,6 @@ public class HeroSelection {
             System.out.println();
         }
 
-        // Paladins
         if (!paladins.isEmpty()) {
             System.out.println(CYAN + "🛡️  PALADINS — Holy warriors with balanced stats" + RESET);
             System.out.println(header);
@@ -181,7 +216,6 @@ public class HeroSelection {
             System.out.println();
         }
 
-        // Sorcerers
         if (!sorcerers.isEmpty()) {
             System.out.println(MAG + "✨ SORCERERS — Powerful magic users" + RESET);
             System.out.println(header);
@@ -196,6 +230,12 @@ public class HeroSelection {
         return indexMap;
     }
 
+    /**
+     * Prints a single hero row in the selection table.
+     *
+     * @param idx index shown to the user
+     * @param h   hero whose stats are displayed
+     */
     private void printHeroRow(int idx, Hero h) {
         System.out.printf(
                 "%-4d %-20s %-4d %-6d %-6d %-6d %-6d %-6d%n",
@@ -210,6 +250,11 @@ public class HeroSelection {
         );
     }
 
+    /**
+     * Displays a summary of the final selected party.
+     *
+     * @param party the completed party
+     */
     private void printFinalParty(Party party) {
         System.out.println();
         System.out.println("=============== " + GREEN + "YOUR PARTY" + RESET + " ===============");
@@ -228,6 +273,12 @@ public class HeroSelection {
         System.out.println("===========================================\n");
     }
 
+    /**
+     * Utility method for printing error messages in red.
+     *
+     * @param s message text
+     * @return formatted red error string
+     */
     private static String RED(String s) {
         return "\u001B[91m" + s + RESET;
     }
