@@ -13,3 +13,6 @@ bin/
 
 # Game saves
 saves/
+*.class
+*.ser
+
