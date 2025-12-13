@@ -36,5 +36,6 @@ public class MonsterTurnController {
                 ai.advanceMonster(m);
             }
         }
+        combat.flushLogs();
     }
 }
