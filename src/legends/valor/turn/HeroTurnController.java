@@ -19,6 +19,7 @@ public class HeroTurnController {
     private final ValorInput input;
 
     private final HeroActionService actions;
+    private final HeroTurnMenuView menuView;
 
     public HeroTurnController(ValorBoard board,
                               ValorMovement movement,
@@ -34,6 +35,7 @@ public class HeroTurnController {
 
         HeroTurnUIHelper ui = new HeroTurnUIHelper(input);
         this.actions = new HeroActionService(board, movement, combat, laneMonsters, ui, homeLane, market, scanner);
+        this.menuView = new HeroTurnMenuView();
     }
 
     /** @return false if player quits the match; true otherwise. */
@@ -44,21 +46,11 @@ public class HeroTurnController {
             System.out.println();
             board.print();
 
-            System.out.println("Hero " + heroNumber + " turn: " + hero.getName());
-            System.out.println(
-                    "Controls:\n" +
-                    "  Move: W/A/S/D\n" +
-                    "  Attack: F\n" +
-                    "  Cast Spell: C\n" +
-                    "  Use Potion: P\n" +
-                    "  Equip: E\n" +
-                    "  Teleport: T\n" +
-                    "  Recall: R\n" +
-                    "  Remove Obstacle: O\n" +
-                    "  Market: M\n" +
-                    "  Wait: N\n" +
-                    "  Quit: Q\n"
-            );
+            int[] pos = movement.findHero(hero);
+            int lane = (pos == null) ? -1 : board.getLane(pos[1]);
+
+            // ✅ prettier UI
+            menuView.renderTurnMenu(heroNumber, hero, pos, lane);
 
             String cmdLine = input.readLine("Enter command: ");
             if (cmdLine == null) continue;
@@ -105,7 +97,8 @@ public class HeroTurnController {
                     break;
 
                 case 'M':
-                    if (actions.openMarket(hero)) return true;
+                    // Market does NOT consume action
+                    actions.openMarket(hero);
                     break;
 
                 case 'W':
