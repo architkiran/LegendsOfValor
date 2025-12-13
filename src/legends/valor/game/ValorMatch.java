@@ -12,6 +12,7 @@ import legends.stats.GameStats;
 import legends.valor.combat.ValorCombat;
 import legends.valor.turn.ConsoleValorInput;
 import legends.valor.turn.ValorTurnManager;
+import legends.valor.ui.ValorRoundStatusView;
 import legends.valor.world.ValorBoard;
 import legends.valor.world.ValorMovement;
 
@@ -32,8 +33,11 @@ public class ValorMatch {
     private GameStats gameStats;
     private int roundsPlayed = 0;
 
+    // ✅ NEW: round status renderer
+    private final ValorRoundStatusView statusView = new ValorRoundStatusView();
+
     // ===== spawn tuning =====
-    private static final int SPAWN_INTERVAL = 4; // you can change: easy6/med4/hard2
+    private static final int SPAWN_INTERVAL = 4;
 
     // Spawner (create after setup)
     private ValorSpawner spawner;
@@ -52,7 +56,6 @@ public class ValorMatch {
         // Create spawner after board is ready
         this.spawner = new ValorSpawner(board);
 
-        // ✅ FIX: pass market + scanner into turn manager
         ValorTurnManager turnManager = new ValorTurnManager(
                 board,
                 movement,
@@ -118,36 +121,8 @@ public class ValorMatch {
     void setLaneMonsters(List<Monster> laneMonsters) { this.laneMonsters = laneMonsters; }
     void setGameStats(GameStats gameStats) { this.gameStats = gameStats; }
 
+    // ✅ UPDATED: use the new UI renderer
     private void renderRoundStatus() {
-        System.out.println();
-        System.out.println("========== ROUND " + roundsPlayed + " STATUS ==========");
-
-        System.out.println("--- Heroes on board ---");
-        for (int r = 0; r < ValorBoard.ROWS; r++) {
-            for (int c = 0; c < ValorBoard.COLS; c++) {
-                Hero h = board.getTile(r, c).getHero();
-                if (h != null) {
-                    double maxHP = h.getLevel() * 100.0;
-                    double maxMP = h.getLevel() * 50.0;
-                    System.out.printf("%s L%d @(%d,%d)  HP %.0f/%.0f  MP %.0f/%.0f%n",
-                            h.getName(), h.getLevel(), r, c,
-                            h.getHP(), maxHP, h.getMP(), maxMP);
-                }
-            }
-        }
-
-        System.out.println("--- Monsters on board ---");
-        for (int r = 0; r < ValorBoard.ROWS; r++) {
-            for (int c = 0; c < ValorBoard.COLS; c++) {
-                Monster m = board.getTile(r, c).getMonster();
-                if (m != null) {
-                    System.out.printf("%s L%d @(%d,%d)  HP %.0f%n",
-                            m.getName(), m.getLevel(), r, c, m.getHP());
-                }
-            }
-        }
-
-        System.out.println("======================================");
-        System.out.println();
+        statusView.printRoundStatus(roundsPlayed, board);
     }
 }
