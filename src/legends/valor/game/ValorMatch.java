@@ -27,7 +27,7 @@ public class ValorMatch {
 
     private Party party;
     private Market market;
-    private List<Monster> laneMonsters = new ArrayList<>();
+    private List<Monster> laneMonsters = new ArrayList<Monster>();
 
     private GameStats gameStats;
     private int roundsPlayed = 0;
@@ -52,9 +52,16 @@ public class ValorMatch {
         // Create spawner after board is ready
         this.spawner = new ValorSpawner(board);
 
+        // ✅ FIX: pass market + scanner into turn manager
         ValorTurnManager turnManager = new ValorTurnManager(
-                board, movement, combat, party, laneMonsters,
-                new ConsoleValorInput(in)
+                board,
+                movement,
+                combat,
+                party,
+                laneMonsters,
+                new ConsoleValorInput(in),
+                market,
+                in
         );
 
         while (true) {
@@ -65,7 +72,7 @@ public class ValorMatch {
             Outcome outcome = turnManager.playOneRound();
             if (outcome != null) return outcome;
 
-            // ===== END OF ROUND: regen (and other maintenance if needed) =====
+            // ===== END OF ROUND: regen =====
             endOfRound(party.getHeroes());
 
             // ===== EVERY N ROUNDS: spawn 3 monsters (1 per lane) =====
@@ -115,7 +122,6 @@ public class ValorMatch {
         System.out.println();
         System.out.println("========== ROUND " + roundsPlayed + " STATUS ==========");
 
-        // Heroes (use board scan so you see positions)
         System.out.println("--- Heroes on board ---");
         for (int r = 0; r < ValorBoard.ROWS; r++) {
             for (int c = 0; c < ValorBoard.COLS; c++) {
@@ -130,7 +136,6 @@ public class ValorMatch {
             }
         }
 
-        // Monsters
         System.out.println("--- Monsters on board ---");
         for (int r = 0; r < ValorBoard.ROWS; r++) {
             for (int c = 0; c < ValorBoard.COLS; c++) {
@@ -145,5 +150,4 @@ public class ValorMatch {
         System.out.println("======================================");
         System.out.println();
     }
-
 }

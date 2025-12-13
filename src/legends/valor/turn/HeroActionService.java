@@ -3,12 +3,14 @@ package legends.valor.turn;
 import legends.characters.Hero;
 import legends.characters.Monster;
 import legends.items.*;
+import legends.market.Market;
 import legends.valor.combat.ValorCombat;
 import legends.valor.world.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 public class HeroActionService {
 
@@ -19,18 +21,25 @@ public class HeroActionService {
     private final HeroTurnUIHelper ui;
     private final Map<Hero, Integer> homeLane;
 
+    private final Market market;
+    private final Scanner scanner;
+
     public HeroActionService(ValorBoard board,
                              ValorMovement movement,
                              ValorCombat combat,
                              List<Monster> laneMonsters,
                              HeroTurnUIHelper ui,
-                             Map<Hero, Integer> homeLane) {
+                             Map<Hero, Integer> homeLane,
+                             Market market,
+                             Scanner scanner) {
         this.board = board;
         this.movement = movement;
         this.combat = combat;
         this.laneMonsters = laneMonsters;
         this.ui = ui;
         this.homeLane = homeLane;
+        this.market = market;
+        this.scanner = scanner;
     }
 
     public boolean attack(Hero hero) {
@@ -82,7 +91,6 @@ public class HeroActionService {
         Potion p = ui.pickPotion(potions);
         if (p == null) return false;
 
-        // You DO have hero.usePotion(Potion) in Hero.java — use it directly.
         hero.usePotion(p);
         hero.getInventory().removeItem(p);
 
@@ -91,18 +99,20 @@ public class HeroActionService {
     }
 
     public boolean equip(Hero hero, ValorInput input) {
-        System.out.println("""
-Equip menu:
-  1) Weapon
-  2) Armor
-  0) Cancel
-""");
+        System.out.println(
+                "Equip menu:\n" +
+                "  1) Weapon\n" +
+                "  2) Armor\n" +
+                "  0) Cancel\n"
+        );
+
         String line = input.readLine("Choose: ");
         if (line == null) return false;
-        line = line.trim();
-        if (line.equals("0")) return false;
 
-        if (line.equals("1")) {
+        line = line.trim();
+        if ("0".equals(line)) return false;
+
+        if ("1".equals(line)) {
             List<Weapon> weapons = ui.getWeapons(hero.getInventory());
             if (weapons.isEmpty()) {
                 System.out.println("No weapons to equip.");
@@ -116,7 +126,7 @@ Equip menu:
             return true;
         }
 
-        if (line.equals("2")) {
+        if ("2".equals(line)) {
             List<Armor> armors = ui.getArmors(hero.getInventory());
             if (armors.isEmpty()) {
                 System.out.println("No armors to equip.");
@@ -158,15 +168,17 @@ Equip menu:
             return false;
         }
 
-        List<int[]> candidates = new ArrayList<>();
-        int r0 = targetPos[0], c0 = targetPos[1];
+        List<int[]> candidates = new ArrayList<int[]>();
+        int r0 = targetPos[0];
+        int c0 = targetPos[1];
         int[][] dirs = { {-1,0}, {1,0}, {0,-1}, {0,1} };
 
-        for (int[] d : dirs) {
-            int r = r0 + d[0], c = c0 + d[1];
+        for (int i = 0; i < dirs.length; i++) {
+            int r = r0 + dirs[i][0];
+            int c = c0 + dirs[i][1];
             if (!board.inBounds(r, c)) continue;
             if (board.getLane(c) == -1) continue;
-            if (r < r0) continue; // not ahead of target
+            if (r < r0) continue;
 
             if (movement.canTeleportHeroTo(hero, r, c)) {
                 candidates.add(new int[]{r, c});
@@ -214,15 +226,17 @@ Equip menu:
         int[] pos = movement.findHero(hero);
         if (pos == null) return false;
 
-        System.out.println("""
-Remove obstacle direction:
-  W = north, A = west, S = south, D = east
-  0 = cancel
-""");
+        System.out.println(
+                "Remove obstacle direction:\n" +
+                "  W = north, A = west, S = south, D = east\n" +
+                "  0 = cancel\n"
+        );
+
         String line = input.readLine("Direction: ");
         if (line == null) return false;
+
         line = line.trim().toUpperCase();
-        if (line.equals("0") || line.isEmpty()) return false;
+        if ("0".equals(line) || line.isEmpty()) return false;
 
         int dr = 0, dc = 0;
         char d = line.charAt(0);
@@ -270,6 +284,31 @@ Remove obstacle direction:
         if (lane != -1) homeLane.put(hero, lane);
     }
 
+    /**
+     * Market action:
+     * - allowed only if hero is on HERO NEXUS row.
+     * - opens ValorMarketController and counts as turn action.
+     */
+    public boolean openMarket(Hero hero) {
+        if (hero == null) return false;
+
+        int[] pos = movement.findHero(hero);
+        if (pos == null) return false;
+
+        if (!board.isHeroesNexus(pos[0], pos[1])) {
+            System.out.println("You can only open the Market while on your Nexus.");
+            return false;
+        }
+
+        if (market == null || scanner == null) {
+            System.out.println("Market is not wired yet.");
+            return false;
+        }
+
+        new legends.valor.game.ValorMarketController(market, scanner).openForHero(hero);
+        return true; // market counts as your action
+    }
+
     // ---------------- internals ----------------
 
     private void cleanupDeadMonsters() {
@@ -277,7 +316,7 @@ Remove obstacle direction:
     }
 
     private List<Hero> getOtherAliveHeroesOnBoard(Hero self) {
-        List<Hero> out = new ArrayList<>();
+        List<Hero> out = new ArrayList<Hero>();
         for (int r = 0; r < ValorBoard.ROWS; r++) {
             for (int c = 0; c < ValorBoard.COLS; c++) {
                 Hero h = board.getTile(r, c).getHero();
