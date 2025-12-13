@@ -44,6 +44,16 @@ public class ValorCombat {
         this.gameStats = gameStats;
     }
 
+    /**
+     * IMPORTANT for UI:
+     * If DODGE logs are buffered/grouped, call this at the end of a phase
+     * (e.g., end of MonsterTurnController.monstersPhase()) so pending dodge
+     * groups still print.
+     */
+    public void flushLogs() {
+        log.flush();
+    }
+
     // =========================================================
     //  RANGE QUERIES
     //  Attack range = current tile + N/S/E/W neighbors
@@ -118,11 +128,13 @@ public class ValorCombat {
         if (hero == null || monster == null) return false;
 
         if (monster.getHP() <= 0) {
+            // flush pending dodge group before printing a different box
+            log.flush();
             log.info("ATTACK", monster.getName() + " is already defeated.");
             return false;
         }
 
-        // dodge
+        // dodge (buffered/grouped)
         if (Math.random() < monster.getDodgeChance()) {
             log.dodge(monster.getName(), monster.getDodgeChance());
             return false;
@@ -138,6 +150,9 @@ public class ValorCombat {
         monster.takeDamage(dmg);
 
         double after = monster.getHP();
+
+        // flush pending dodge group before attack box
+        log.flush();
         log.heroAttack(hero, monster, dmg, before, after);
 
         if (monster.getHP() <= 0) {
@@ -155,7 +170,7 @@ public class ValorCombat {
         if (hero == null || monster == null) return false;
         if (hero.getHP() <= 0) return false;
 
-        // dodge
+        // dodge (buffered/grouped)
         if (Math.random() < hero.getDodgeChance()) {
             log.dodge(hero.getName(), hero.getDodgeChance());
             return false;
@@ -171,6 +186,9 @@ public class ValorCombat {
         hero.takeDamage(dmg);
 
         double after = hero.getHP();
+
+        // flush pending dodge group before attack box
+        log.flush();
         log.monsterAttack(monster, hero, dmg, before, after);
 
         if (hero.getHP() <= 0) {
@@ -198,11 +216,13 @@ public class ValorCombat {
 
         List<Monster> inRange = getMonstersInRange(hero);
         if (!inRange.contains(target)) {
+            log.flush();
             log.info("SPELL", "Target is not in range.");
             return false;
         }
 
         if (!hero.canCast(spell)) {
+            log.flush();
             log.info("SPELL", "Not enough mana!");
             return false;
         }
@@ -210,7 +230,7 @@ public class ValorCombat {
         // spend mana first (action is consumed once spell is attempted)
         hero.spendMana(spell.getManaCost());
 
-        // monster dodge
+        // monster dodge (buffered/grouped)
         if (Math.random() < target.getDodgeChance()) {
             log.dodge(target.getName(), target.getDodgeChance());
             return true;
@@ -232,6 +252,9 @@ public class ValorCombat {
         target.takeDamage(dmg);
 
         double after = target.getHP();
+
+        // flush pending dodge group before spell box
+        log.flush();
         log.spellCast(hero, spell, target, dmg, before, after);
 
         if (target.getHP() <= 0) {
@@ -252,13 +275,12 @@ public class ValorCombat {
     private void applySpellEffect(Spell spell, Monster target) {
         if (spell == null || target == null) return;
 
-        // We keep the debuff logic but remove messy println spam.
-        // If you want, we can add a dedicated log method for "DEBUFF".
         String type = String.valueOf(spell.getType());
 
         if ("FIRE".equals(type)) {
             double val = target.getDefense();
             target.setDefense(Math.max(0, val - val * 0.1));
+            log.flush();
             log.info("DEBUFF", target.getName() + " DEF reduced by 10% (Fire)");
             return;
         }
@@ -266,6 +288,7 @@ public class ValorCombat {
         if ("ICE".equals(type)) {
             double val = target.getDamage();
             target.setDamage(Math.max(0, val - val * 0.1));
+            log.flush();
             log.info("DEBUFF", target.getName() + " DMG reduced by 10% (Ice)");
             return;
         }
@@ -273,6 +296,7 @@ public class ValorCombat {
         if ("LIGHTNING".equals(type)) {
             double val = target.getDodgeChance();
             target.setDodgeChance(Math.max(0, val - val * 0.1));
+            log.flush();
             log.info("DEBUFF", target.getName() + " Dodge reduced by 10% (Lightning)");
         }
     }

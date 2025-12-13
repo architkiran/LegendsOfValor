@@ -4,8 +4,6 @@ import legends.characters.Hero;
 import legends.characters.Monster;
 import legends.items.Spell;
 
-import java.util.regex.Pattern;
-
 public class ValorCombatLogView {
 
     // ANSI
@@ -20,230 +18,149 @@ public class ValorCombatLogView {
     private static final String CYAN  = "\u001B[36m";
     private static final String WHITE = "\u001B[37m";
 
-    // Box width (visible chars inside the border)
-    private static final int WIDTH = 58;
+    // --------- DODGE grouping state ----------
+    private String pendingDodgeName = null;
+    private double pendingDodgeChance = 0.0;
+    private int pendingDodgeCount = 0;
 
-    // ANSI escape matcher (for correct width calc)
-    private static final Pattern ANSI = Pattern.compile("\\u001B\\[[;\\d]*m");
+    // Call this before printing any other combat box, and at end of phases.
+    public void flush() {
+        if (pendingDodgeCount <= 0 || pendingDodgeName == null) return;
 
-    // ---------------------------------------------------------
-    // Public API (same method names you already use)
-    // ---------------------------------------------------------
+        printHeader("DODGE", YELLOW);
+
+        String titleLine = " " + BOLD + pendingDodgeName + RESET + " dodged!";
+        if (pendingDodgeCount > 1) {
+            titleLine = " " + BOLD + pendingDodgeName + RESET + " dodged attacks!";
+        }
+
+        System.out.println(titleLine);
+        printDetails("Result", YELLOW + "DODGE" + RESET);
+
+        if (pendingDodgeCount > 1) {
+            printDetails("Attempts dodged", String.valueOf(pendingDodgeCount));
+        }
+
+        int pct = (int) Math.round(pendingDodgeChance * 100.0);
+        printDetails("Chance", pct + "%");
+
+        printFooter();
+
+        // reset
+        pendingDodgeName = null;
+        pendingDodgeChance = 0.0;
+        pendingDodgeCount = 0;
+    }
 
     public void heroAttack(Hero hero, Monster target, int damage, double hpBefore, double hpAfter) {
-        printBoxHeader("ATTACK", CYAN);
-
-        String headline = BOLD + hero.getName() + RESET + "  →  " + BOLD + target.getName() + RESET;
-        printLine(" " + headline);
-
-        printKeyVals(
-                "Result", badgeHit(),
-                "Damage", YELLOW + damage + RESET,
-                "HP", formatHP(hpBefore) + dimArrow() + formatHP(hpAfter)
-        );
-
-        printBoxFooter();
+        flush();
+        printHeader("ATTACK", CYAN);
+        System.out.println(" " + BOLD + hero.getName() + RESET + " attacks " + BOLD + target.getName() + RESET);
+        printDetails("Result", GREEN + "HIT" + RESET);
+        printDetails("Damage", YELLOW + String.valueOf(damage) + RESET);
+        printDetails("Target HP", formatHP(hpBefore) + "  →  " + formatHP(hpAfter));
+        printFooter();
     }
 
     public void monsterAttack(Monster monster, Hero hero, int damage, double hpBefore, double hpAfter) {
-        printBoxHeader("MONSTER ATTACK", RED);
-
-        String headline = BOLD + monster.getName() + RESET + "  →  " + BOLD + hero.getName() + RESET;
-        printLine(" " + headline);
-
-        printKeyVals(
-                "Result", badgeHit(),
-                "Damage", YELLOW + damage + RESET,
-                "HP", formatHP(hpBefore) + dimArrow() + formatHP(hpAfter)
-        );
-
-        printBoxFooter();
+        flush();
+        printHeader("MONSTER ATTACK", RED);
+        System.out.println(" " + BOLD + monster.getName() + RESET + " attacks " + BOLD + hero.getName() + RESET);
+        printDetails("Result", GREEN + "HIT" + RESET);
+        printDetails("Damage", YELLOW + String.valueOf(damage) + RESET);
+        printDetails("Hero HP", formatHP(hpBefore) + "  →  " + formatHP(hpAfter));
+        printFooter();
     }
 
     public void spellCast(Hero hero, Spell spell, Monster target, int damage, double hpBefore, double hpAfter) {
-        printBoxHeader("SPELL", MAGENTA);
-
-        String headline = BOLD + hero.getName() + RESET
-                + " casts " + MAGENTA + spell.getName() + RESET
-                + "  →  " + BOLD + target.getName() + RESET;
-        printLine(" " + headline);
-
-        printKeyVals(
-                "Type", CYAN + String.valueOf(spell.getType()) + RESET,
-                "Damage", YELLOW + damage + RESET,
-                "HP", formatHP(hpBefore) + dimArrow() + formatHP(hpAfter)
-        );
-
-        printBoxFooter();
+        flush();
+        printHeader("SPELL", MAGENTA);
+        System.out.println(" " + BOLD + hero.getName() + RESET + " casts " + MAGENTA + spell.getName() + RESET
+                + " on " + BOLD + target.getName() + RESET);
+        printDetails("Type", CYAN + String.valueOf(spell.getType()) + RESET);
+        printDetails("Damage", YELLOW + String.valueOf(damage) + RESET);
+        printDetails("Target HP", formatHP(hpBefore) + "  →  " + formatHP(hpAfter));
+        printFooter();
     }
 
+    // ✅ Now dodge DOES NOT print immediately — it groups duplicates.
     public void dodge(String dodgerName, double dodgeChance) {
-        printBoxHeader("DODGE", YELLOW);
+        // If same target keeps dodging, just increment
+        if (pendingDodgeName != null
+                && pendingDodgeName.equals(dodgerName)
+                && Math.abs(pendingDodgeChance - dodgeChance) < 0.000001) {
+            pendingDodgeCount++;
+            return;
+        }
 
-        String headline = BOLD + dodgerName + RESET + " dodged!";
-        printLine(" " + headline);
-
-        String pct = (int) Math.round(dodgeChance * 100) + "%";
-        printKeyVals(
-                "Result", badgeDodge(),
-                "Chance", YELLOW + pct + RESET
-        );
-
-        printBoxFooter();
+        // Otherwise flush previous grouped dodge and start new group
+        flush();
+        pendingDodgeName = dodgerName;
+        pendingDodgeChance = dodgeChance;
+        pendingDodgeCount = 1;
     }
 
-    /** Keep it clean: no full box spam, just a strong one-liner. */
     public void slain(String name) {
-        System.out.println(GREEN + BOLD + "✔ KILL: " + name + " has been slain!" + RESET);
+        flush();
+        printHeader("KILL", GREEN);
+        System.out.println(" " + GREEN + BOLD + "✔ " + name + " has been slain!" + RESET);
+        printFooter();
     }
 
-    /** Keep it clean: no full box spam, just a strong one-liner. */
     public void fallen(String name) {
-        System.out.println(RED + BOLD + "✖ DOWN: " + name + " has fallen!" + RESET);
+        flush();
+        printHeader("DOWN", RED);
+        System.out.println(" " + RED + BOLD + "✖ " + name + " has fallen!" + RESET);
+        printFooter();
     }
 
     public void info(String title, String msg) {
-        printBoxHeader(title, BLUE);
-        printLine(" " + msg);
-        printBoxFooter();
+        flush();
+        printHeader(title, BLUE);
+        System.out.println(" " + msg);
+        printFooter();
     }
 
-    // ---------------------------------------------------------
-    // Formatting helpers (ANSI-safe width)
-    // ---------------------------------------------------------
+    // ---------- formatting helpers ----------
 
-    private String badgeHit() {
-        return GREEN + BOLD + "HIT" + RESET;
-    }
-
-    private String badgeDodge() {
-        return YELLOW + BOLD + "DODGE" + RESET;
-    }
-
-    private String dimArrow() {
-        return DIM + "  →  " + RESET;
-    }
-
-    private void printBoxHeader(String title, String color) {
+    private void printHeader(String title, String color) {
         System.out.println();
-        System.out.println(color + BOLD + "┌" + repeat("─", WIDTH) + "┐" + RESET);
-
-        String t = " " + title + " ";
-        System.out.println(color + "│" + RESET + padCenterVisible(BOLD + t + RESET, WIDTH) + color + "│" + RESET);
-
-        System.out.println(color + BOLD + "├" + repeat("─", WIDTH) + "┤" + RESET);
+        System.out.println(color + BOLD + "┌──────────────────────────────────────────────┐" + RESET);
+        String line = " " + title + " ";
+        System.out.println(color + "│" + RESET + padCenter(line, 46) + color + "│" + RESET);
+        System.out.println(color + BOLD + "├──────────────────────────────────────────────┤" + RESET);
     }
 
-    private void printBoxFooter() {
-        System.out.println(WHITE + BOLD + "└" + repeat("─", WIDTH) + "┘" + RESET);
+    private void printDetails(String k, String v) {
+        String left = DIM + k + RESET + ": " + v;
+        System.out.println(" " + padRight(left, 46));
     }
 
-    private void printLine(String content) {
-        // one content line inside the box
-        System.out.println(WHITE + "│" + RESET + padRightVisible(content, WIDTH) + WHITE + "│" + RESET);
-    }
-
-    /**
-     * Print 2–3 key/value lines compactly (no extra blank lines).
-     * Example:
-     *   Result: HIT
-     *   Damage: 279
-     *   HP: 100 -> 0
-     */
-    private void printKeyVals(String k1, String v1, String k2, String v2) {
-        printKV(k1, v1);
-        printKV(k2, v2);
-    }
-
-    private void printKeyVals(String k1, String v1, String k2, String v2, String k3, String v3) {
-        printKV(k1, v1);
-        printKV(k2, v2);
-        printKV(k3, v3);
-    }
-
-    private void printKV(String key, String value) {
-        String left = " " + DIM + key + RESET + ": " + value;
-        printLine(left);
+    private void printFooter() {
+        System.out.println(WHITE + BOLD + "└──────────────────────────────────────────────┘" + RESET);
     }
 
     private String formatHP(double hp) {
-        int v = (int) Math.round(hp);
-        if (v <= 0) return RED + "0" + RESET;
-        return String.valueOf(v);
+        return (hp <= 0) ? RED + "0" + RESET : String.valueOf((int) Math.round(hp));
     }
 
-    // ---------------- width + padding (ANSI-safe) ----------------
-
-    private int visibleLen(String s) {
-        if (s == null) return 0;
-        return stripAnsi(s).length();
-    }
-
-    private String stripAnsi(String s) {
-        if (s == null) return "";
-        return ANSI.matcher(s).replaceAll("");
-    }
-
-    private String padRightVisible(String s, int width) {
+    private String padRight(String s, int width) {
         if (s == null) s = "";
-        int len = visibleLen(s);
-        if (len >= width) return truncateVisible(s, width);
+        if (s.length() >= width) return s;
         StringBuilder sb = new StringBuilder(s);
-        for (int i = 0; i < (width - len); i++) sb.append(' ');
+        while (sb.length() < width) sb.append(' ');
         return sb.toString();
     }
 
-    private String padCenterVisible(String s, int width) {
+    private String padCenter(String s, int width) {
         if (s == null) s = "";
-        int len = visibleLen(s);
-        if (len >= width) return truncateVisible(s, width);
-
-        int left = (width - len) / 2;
-        int right = width - len - left;
-
+        if (s.length() >= width) return s.substring(0, width);
+        int left = (width - s.length()) / 2;
+        int right = width - s.length() - left;
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < left; i++) sb.append(' ');
         sb.append(s);
         for (int i = 0; i < right; i++) sb.append(' ');
-        return sb.toString();
-    }
-
-    /**
-     * Truncate by visible chars. Keeps ANSI codes but stops once visible width reached.
-     * Simple + good enough for console.
-     */
-    private String truncateVisible(String s, int width) {
-        if (s == null) return "";
-        if (visibleLen(s) <= width) return s;
-
-        StringBuilder out = new StringBuilder();
-        int visible = 0;
-
-        for (int i = 0; i < s.length(); i++) {
-            char ch = s.charAt(i);
-
-            // Copy ANSI sequences without counting them
-            if (ch == '\u001B') {
-                int j = i;
-                while (j < s.length() && s.charAt(j) != 'm') j++;
-                if (j < s.length()) {
-                    out.append(s, i, j + 1);
-                    i = j;
-                    continue;
-                }
-            }
-
-            if (visible >= width) break;
-            out.append(ch);
-            visible++;
-        }
-
-        return out.toString();
-    }
-
-    private String repeat(String s, int count) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < count; i++) sb.append(s);
         return sb.toString();
     }
 }

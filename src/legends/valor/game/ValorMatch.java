@@ -123,6 +123,6 @@ public class ValorMatch {
 
     // ✅ UPDATED: use the new UI renderer
     private void renderRoundStatus() {
-        statusView.printRoundStatus(roundsPlayed, board);
+        statusView.printRoundStatus(board, roundsPlayed);
     }
 }
