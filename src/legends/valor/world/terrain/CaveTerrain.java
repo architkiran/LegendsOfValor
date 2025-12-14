@@ -16,8 +16,15 @@ public class CaveTerrain implements Terrain {
     public void onEnter(Entity entity) {
         if (entity instanceof Hero) {
             Hero hero = (Hero) entity;
-            double currentAgility = hero.getAgility();
-            hero.setAgility(currentAgility * (1.0 + BONUS));
+            double before = hero.getAgility();
+            double after  = before * (1.0 + BONUS);
+            double gained = after - before;
+
+            hero.setAgility(after);
+
+            System.out.printf(
+                "[Terrain Bonus] %s entered Cave: Agility +%.2f (%.2f → %.2f)%n",
+                hero.getName(), gained, before, after);
         }
     }
 
@@ -25,8 +32,15 @@ public class CaveTerrain implements Terrain {
     public void onExit(Entity entity) {
         if (entity instanceof Hero) {
             Hero hero = (Hero) entity;
-            double currentAgility = hero.getAgility();
-            hero.setAgility(currentAgility / (1.0 + BONUS));
+
+            double before = hero.getAgility();
+            double after  = before / (1.0 + BONUS);
+
+            hero.setAgility(after);
+
+            System.out.printf(
+                "[Terrain Bonus] %s left Cave: Agility reverted (%.2f → %.2f)%n",
+                hero.getName(), before, after);
         }
     }
 

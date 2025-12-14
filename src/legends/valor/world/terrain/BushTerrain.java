@@ -16,8 +16,16 @@ public class BushTerrain implements Terrain {
     public void onEnter(Entity entity) {
         if (entity instanceof Hero) {
             Hero hero = (Hero) entity;
-            double currentDex = hero.getDexterity();
-            hero.setDexterity(currentDex * (1.0 + BONUS));
+
+            double before = hero.getDexterity();
+            double after  = before * (1.0 + BONUS);
+            double gained = after - before;
+
+            hero.setDexterity(after);
+
+            System.out.printf(
+                "[Terrain Bonus] %s entered Bush: Dexterity +%.2f (%.2f → %.2f)%n",
+                hero.getName(), gained, before, after);
         }
     }
 
@@ -25,8 +33,16 @@ public class BushTerrain implements Terrain {
     public void onExit(Entity entity) {
         if (entity instanceof Hero) {
             Hero hero = (Hero) entity;
-            double currentDex = hero.getDexterity();
-            hero.setDexterity(currentDex / (1.0 + BONUS));
+
+            double before = hero.getDexterity();
+            double after  = before / (1.0 + BONUS);
+
+            hero.setDexterity(after);
+
+            System.out.printf(
+                "[Terrain Bonus] %s left Bush: Dexterity reverted (%.2f → %.2f)%n",
+                hero.getName(), before, after
+        );
         }
     }
 

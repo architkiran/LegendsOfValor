@@ -16,8 +16,15 @@ public class KoulouTerrain implements Terrain {
     public void onEnter(Entity entity) {
         if (entity instanceof Hero) {
             Hero hero = (Hero) entity;
-            double currentStrength = hero.getStrength();
-            hero.setStrength(currentStrength * (1.0 + BONUS));
+            double before = hero.getStrength();
+            double after  = before * (1.0 + BONUS);
+            double gained = after - before;
+
+            hero.setStrength(after);
+
+            System.out.printf(
+                "[Terrain Bonus] %s entered Koulou: Strength +%.2f (%.2f → %.2f)%n",
+                hero.getName(), gained, before, after);
         }
     }
 
@@ -25,8 +32,14 @@ public class KoulouTerrain implements Terrain {
     public void onExit(Entity entity) {
         if (entity instanceof Hero) {
             Hero hero = (Hero) entity;
-            double currentStrength = hero.getStrength();
-            hero.setStrength(currentStrength / (1.0 + BONUS));
+            double before = hero.getStrength();
+            double after  = before / (1.0 + BONUS);
+            
+            hero.setStrength(after);
+
+            System.out.printf(
+                "[Terrain Bonus] %s left Koulou: Strength reverted (%.2f → %.2f)%n",
+                hero.getName(), before, after);
         }
     }
 
