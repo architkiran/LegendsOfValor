@@ -64,17 +64,14 @@ public class ValorBoard {
     }
 
     private ValorCellType randomLaneType() {
-        // Approx distribution:
-        // 40% PLAIN, 20% BUSH, 20% CAVE, 15% KOULOU, 5% OBSTACLE
-        int v = rng.nextInt(20);
+        int v = rng.nextInt(100);
 
-        if (v < 8)           return ValorCellType.PLAIN;
-        else if (v < 12)     return ValorCellType.BUSH;
-        else if (v < 16)     return ValorCellType.CAVE;
-        else if (v < 19)     return ValorCellType.KOULOU;
-        else                 return ValorCellType.OBSTACLE;
+        if (v < 60)           return ValorCellType.PLAIN;     // 60%
+        else if (v < 75)      return ValorCellType.BUSH;      // 15%
+        else if (v < 85)      return ValorCellType.CAVE;      // 10%
+        else if (v < 95)      return ValorCellType.KOULOU;    // 10%
+        else                  return ValorCellType.OBSTACLE; // 5%
     }
-
     // =========================================================
     // LANE & NEXUS HELPERS
     // =========================================================

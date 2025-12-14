@@ -44,7 +44,7 @@ public class ValorTile extends Tile {
 
     @Override
     public String getSymbol() {
-        return type.getSymbol();
+        return String.valueOf(type.getSymbol());
     }
 
     /* ===============================
