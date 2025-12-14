@@ -1,6 +1,7 @@
 package legends.ui;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public final class ConsoleUI {
@@ -31,45 +32,71 @@ public final class ConsoleUI {
         System.out.println(MAGENTA + BOLD + "══ " + title + " ══" + RESET);
     }
 
+    /**
+     * Draw a box like:
+     * ┏━━━━━━━━━━━━━━━━━━━━┓
+     * ┃ Title              ┃
+     * ┣━━━━━━━━━━━━━━━━━━━━┫
+     * ┃ line1              ┃
+     * ┃ line2              ┃
+     * ┗━━━━━━━━━━━━━━━━━━━━┛
+     *
+     * IMPORTANT:
+     * - Width must be computed from VISIBLE length (strip ANSI).
+     * - Padding width must match exactly: "┃ " + content(padded to innerWidth) + " ┃"
+     */
     public static void boxed(String title, List<String> lines) {
-        int w = title.length();
-        for (String s : lines) w = Math.max(w, stripAnsi(s).length());
-        w += 4;
+        if (title == null) title = "";
+        if (lines == null) lines = Collections.emptyList();
 
-        String top = "┏" + "━".repeat(w) + "┓";
-        String mid = "┣" + "━".repeat(w) + "┫";
-        String bot = "┗" + "━".repeat(w) + "┛";
+        // innerWidth = max visible width of title/lines
+        int innerWidth = visibleLen(title);
+        for (String s : lines) innerWidth = Math.max(innerWidth, visibleLen(s));
+
+        // Full box width uses innerWidth (content area), plus fixed side decorations printed below.
+        // Top/bottom lines need: "┏" + ("━" repeated (innerWidth + 2)) + "┓"
+        // because inside we print: "┃ " + content(innerWidth padded) + " ┃"  => innerWidth + 2 spaces
+        String top = "┏" + repeat("━", innerWidth + 2) + "┓";
+        String mid = "┣" + repeat("━", innerWidth + 2) + "┫";
+        String bot = "┗" + repeat("━", innerWidth + 2) + "┛";
 
         System.out.println(top);
-        System.out.println("┃ " + padRight(title, w - 2) + "┃");
+        System.out.println("┃ " + padRight(title, innerWidth) + " ┃");
         System.out.println(mid);
         for (String s : lines) {
-            System.out.println("┃ " + padRight(s, w - 2) + "┃");
+            System.out.println("┃ " + padRight(s, innerWidth) + " ┃");
         }
         System.out.println(bot);
     }
 
     public static String padRight(String s, int width) {
-        int len = stripAnsi(s).length();
+        if (s == null) s = "";
+        int len = visibleLen(s);
         if (len >= width) return s;
-        return s + " ".repeat(width - len);
+        return s + repeat(" ", width - len);
     }
 
     public static String padLeft(String s, int width) {
-        int len = stripAnsi(s).length();
+        if (s == null) s = "";
+        int len = visibleLen(s);
         if (len >= width) return s;
-        return " ".repeat(width - len) + s;
+        return repeat(" ", width - len) + s;
     }
 
+    /**
+     * Build a simple padded table (no borders).
+     * Each column width is computed with visible length (ANSI stripped).
+     */
     public static List<String> table(List<String[]> rows) {
-        if (rows == null || rows.isEmpty()) return List.of();
+        if (rows == null || rows.isEmpty()) return Collections.emptyList();
 
         int cols = rows.get(0).length;
         int[] widths = new int[cols];
 
         for (String[] r : rows) {
             for (int c = 0; c < cols; c++) {
-                widths[c] = Math.max(widths[c], stripAnsi(r[c]).length());
+                String cell = (r[c] == null) ? "" : r[c];
+                widths[c] = Math.max(widths[c], visibleLen(cell));
             }
         }
 
@@ -77,7 +104,8 @@ public final class ConsoleUI {
         for (String[] r : rows) {
             StringBuilder sb = new StringBuilder();
             for (int c = 0; c < cols; c++) {
-                sb.append(padRight(r[c], widths[c]));
+                String cell = (r[c] == null) ? "" : r[c];
+                sb.append(padRight(cell, widths[c]));
                 if (c < cols - 1) sb.append("  ");
             }
             out.add(sb.toString());
@@ -85,8 +113,21 @@ public final class ConsoleUI {
         return out;
     }
 
+    // ===== Helpers =====
+
+    private static int visibleLen(String s) {
+        return stripAnsi(s).length();
+    }
+
     private static String stripAnsi(String s) {
         if (s == null) return "";
         return s.replaceAll("\u001B\\[[;\\d]*m", "");
+    }
+
+    private static String repeat(String s, int n) {
+        if (n <= 0) return "";
+        StringBuilder sb = new StringBuilder(n * s.length());
+        for (int i = 0; i < n; i++) sb.append(s);
+        return sb.toString();
     }
 }
