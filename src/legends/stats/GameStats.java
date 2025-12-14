@@ -1,3 +1,16 @@
+/**
+ * File: GameStats.java
+ * Package: legends.stats
+ *
+ * Purpose:
+ *   Tracks and aggregates runtime statistics for a single game session.
+ *
+ * Responsibilities:
+ *   - Record game lifecycle timing and outcome
+ *   - Maintain per-hero performance statistics
+ *   - Aggregate totals for scoring and leaderboard use
+ *   - Compute a final score based on game performance
+ */
 package legends.stats;
 
 import legends.characters.Hero;
@@ -8,29 +21,44 @@ import java.util.*;
 
 public class GameStats {
 
+    /**
+     * Identifies which game mode was played.
+     */
     public enum GameMode {
         MONSTERS_AND_HEROES,
         LEGENDS_OF_VALOR
     }
 
+    /**
+     * Represents the final outcome of a game session.
+     */
     public enum GameResult {
         HEROES_WIN,
         MONSTERS_WIN,
         QUIT
     }
 
+    // Game mode for this session
     private final GameMode mode;
+
+    // Timestamp when the game started
     private final LocalDateTime startedAt;
+
+    // Timestamp when the game ended
     private LocalDateTime endedAt;
 
+    // Final result of the game
     private GameResult result;
 
-    // how many full rounds were completed (hero-phase + monster-phase)
+    // Number of completed rounds (hero phase + monster phase)
     private int rounds = 0;
 
-    // One HeroStats per hero
+    // Per-hero statistics, preserved in insertion order
     private final Map<Hero, HeroStats> heroStats = new LinkedHashMap<>();
 
+    /**
+     * Initializes game statistics for a new session.
+     */
     public GameStats(GameMode mode, List<Hero> heroes) {
         this.mode = mode;
         this.startedAt = LocalDateTime.now();
@@ -41,9 +69,7 @@ public class GameStats {
         }
     }
 
-    // ---------------------------
-    // Lifecycle
-    // ---------------------------
+    // Lifecycle tracking
 
     public GameMode getMode() { return mode; }
 
@@ -51,6 +77,9 @@ public class GameStats {
 
     public int getRounds() { return rounds; }
 
+    /**
+     * Marks the game as ended and records its result.
+     */
     public void markEnded(GameResult result) {
         this.result = result;
         this.endedAt = LocalDateTime.now();
@@ -62,26 +91,32 @@ public class GameStats {
 
     public LocalDateTime getEndedAt() { return endedAt; }
 
+    /**
+     * Returns the total duration of the game.
+     */
     public Duration getDuration() {
         if (endedAt == null) return Duration.ZERO;
         return Duration.between(startedAt, endedAt);
     }
 
-    // ---------------------------
-    // Hero stats access
-    // ---------------------------
+    // Hero statistics access
 
+    /**
+     * Returns statistics for all heroes in the game.
+     */
     public Collection<HeroStats> getHeroStats() {
         return heroStats.values();
     }
 
+    /**
+     * Returns statistics for a specific hero.
+     */
     public HeroStats statsFor(Hero hero) {
         return heroStats.get(hero);
     }
 
-    // ---------------------------
-    // Totals (for leaderboard rows)
-    // ---------------------------
+    // Aggregated totals (leaderboard use)
+
 
     public int totalKills() {
         int sum = 0;
@@ -120,11 +155,13 @@ public class GameStats {
     }
 
     /**
-     * Simple score heuristic (you can tweak later):
-     * - Win bonus, lose penalty
-     * - Reward kills, damage dealt
-     * - Penalize fainting + damage taken
-     * - Small bonus for finishing faster (fewer rounds)
+     * Computes a final score for the game session.
+     *
+     * Scoring heuristic:
+     * - Win bonus / loss penalty
+     * - Rewards kills and damage dealt
+     * - Penalizes fainting and damage taken
+     * - Small penalty for longer games (more rounds)
      */
     public int computeScore() {
         int score = 0;
@@ -138,7 +175,7 @@ public class GameStats {
         score -= totalFaints() * 150;
         score -= (int) Math.round(totalDamageTaken() * 0.2);
 
-        score -= rounds * 10; // faster win => higher score
+        score -= rounds * 10;
 
         return Math.max(score, 0);
     }

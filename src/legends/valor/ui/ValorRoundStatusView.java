@@ -1,8 +1,22 @@
+/**
+ * File: ValorRoundStatusView.java
+ * Package: legends.valor.ui
+ *
+ * Purpose:
+ *   Displays a per-round status snapshot of the Valor board.
+ *
+ * Responsibilities:
+ *   - Print a round header and overall counts of heroes and monsters on the board
+ *   - Render a formatted table of heroes with position, lane, and HP/MP status
+ *   - Render a formatted table of monsters with position, lane, and HP status
+ *   - Provide ANSI-safe formatting helpers to keep tables aligned with colored text
+ */
 package legends.valor.ui;
 
 import legends.characters.Hero;
 import legends.characters.Monster;
 import legends.valor.world.ValorBoard;
+import legends.valor.world.ValorTile;
 
 public class ValorRoundStatusView {
 
@@ -15,7 +29,7 @@ public class ValorRoundStatusView {
     private static final String WHITE = "\u001B[37m";
     private static final String GREEN = "\u001B[32m";
 
-    // Column widths (tune if needed)
+    // Fixed column widths used by the status tables
     private static final int W_NAME = 20;
     private static final int W_LV   = 4;
     private static final int W_POS  = 9;
@@ -23,11 +37,17 @@ public class ValorRoundStatusView {
     private static final int W_MP   = 10;
     private static final int W_LANE = 6;
 
+    // Total width for headers and separator lines
     private static final int TABLE_WIDTH = 86;
 
+    // Precomputed line separators to keep output consistent
     private static final String LINE = repeat("=", TABLE_WIDTH);
     private static final String DASH = repeat("-", TABLE_WIDTH);
 
+    /**
+     * Prints a formatted snapshot of the current round status, including
+     * all heroes and monsters currently placed on the board.
+     */
     public void printRoundStatus(ValorBoard board, int round) {
         if (board == null) return;
 
@@ -39,27 +59,28 @@ public class ValorRoundStatusView {
         System.out.println(center("ROUND " + round + " STATUS", TABLE_WIDTH));
         System.out.println(WHITE + BOLD + LINE + RESET);
 
-        // ---------------- Heroes ----------------
+        // Hero table section (position, lane, HP/MP)
         System.out.println();
         System.out.println(CYAN + BOLD + "HEROES ON BOARD" + RESET + " " + DIM + "(" + heroCount + ")" + RESET);
-        System.out.println(CYAN + repeat("-", TABLE_WIDTH) + RESET);
+        System.out.println(CYAN + DASH + RESET);
 
-        // Header
         String heroHeader =
-                padCell("Name", W_NAME) + " " +
-                padCell("Lv", W_LV)     + " " +
-                padCell("Pos", W_POS)   + " " +
-                padCell("HP", W_HP)     + " " +
-                padCell("MP", W_MP)     + " " +
-                padCell("Lane", W_LANE);
+                padCell(BOLD + "Name" + RESET, W_NAME) + " " +
+                padCell(BOLD + "Lv"   + RESET, W_LV)   + " " +
+                padCell(BOLD + "Pos"  + RESET, W_POS)  + " " +
+                padCell(BOLD + "HP"   + RESET, W_HP)   + " " +
+                padCell(BOLD + "MP"   + RESET, W_MP)   + " " +
+                padCell(BOLD + "Lane" + RESET, W_LANE);
 
         System.out.println(heroHeader);
-        System.out.println(DIM + repeat("-", TABLE_WIDTH) + RESET);
+        System.out.println(DIM + DASH + RESET);
 
-        // Rows (IMPORTANT: use padCell so ANSI in HP doesn't break alignment)
         for (int r = 0; r < ValorBoard.ROWS; r++) {
             for (int c = 0; c < ValorBoard.COLS; c++) {
-                Hero h = board.getTile(r, c).getHero();
+                ValorTile tile = board.getTile(r, c);
+                if (tile == null) continue;
+
+                Hero h = tile.getHero();
                 if (h == null) continue;
 
                 String name = trimTo(h.getName(), W_NAME);
@@ -74,7 +95,7 @@ public class ValorRoundStatusView {
                         padCell(name, W_NAME) + " " +
                         padCell(lv,   W_LV)   + " " +
                         padCell(pos,  W_POS)  + " " +
-                        padCell(hp,   W_HP)   + " " +   // <-- ANSI-safe now
+                        padCell(hp,   W_HP)   + " " +
                         padCell(mp,   W_MP)   + " " +
                         padCell(lane, W_LANE);
 
@@ -82,24 +103,27 @@ public class ValorRoundStatusView {
             }
         }
 
-        // ---------------- Monsters ----------------
+        // Monster table section (position, lane, HP)
         System.out.println();
         System.out.println(RED + BOLD + "MONSTERS ON BOARD" + RESET + " " + DIM + "(" + monsterCount + ")" + RESET);
-        System.out.println(RED + repeat("-", TABLE_WIDTH) + RESET);
+        System.out.println(RED + DASH + RESET);
 
         String monsterHeader =
-                padCell("Name", W_NAME) + " " +
-                padCell("Lv", W_LV)     + " " +
-                padCell("Pos", W_POS)   + " " +
-                padCell("HP", 10)       + " " +
-                padCell("Lane", W_LANE);
+                padCell(BOLD + "Name" + RESET, W_NAME) + " " +
+                padCell(BOLD + "Lv"   + RESET, W_LV)   + " " +
+                padCell(BOLD + "Pos"  + RESET, W_POS)  + " " +
+                padCell(BOLD + "HP"   + RESET, 10)     + " " +
+                padCell(BOLD + "Lane" + RESET, W_LANE);
 
         System.out.println(monsterHeader);
-        System.out.println(DIM + repeat("-", TABLE_WIDTH) + RESET);
+        System.out.println(DIM + DASH + RESET);
 
         for (int r = 0; r < ValorBoard.ROWS; r++) {
             for (int c = 0; c < ValorBoard.COLS; c++) {
-                Monster m = board.getTile(r, c).getMonster();
+                ValorTile tile = board.getTile(r, c);
+                if (tile == null) continue;
+
+                Monster m = tile.getMonster();
                 if (m == null) continue;
 
                 String name = trimTo(m.getName(), W_NAME);
@@ -123,28 +147,37 @@ public class ValorRoundStatusView {
         System.out.println();
     }
 
-    // ---------------- helpers ----------------
-
+    /**
+     * Counts how many heroes are currently placed on the board.
+     */
     private int countHeroes(ValorBoard board) {
         int cnt = 0;
         for (int r = 0; r < ValorBoard.ROWS; r++) {
             for (int c = 0; c < ValorBoard.COLS; c++) {
-                if (board.getTile(r, c).getHero() != null) cnt++;
+                ValorTile t = board.getTile(r, c);
+                if (t != null && t.getHero() != null) cnt++;
             }
         }
         return cnt;
     }
 
+    /**
+     * Counts how many monsters are currently placed on the board.
+     */
     private int countMonsters(ValorBoard board) {
         int cnt = 0;
         for (int r = 0; r < ValorBoard.ROWS; r++) {
             for (int c = 0; c < ValorBoard.COLS; c++) {
-                if (board.getTile(r, c).getMonster() != null) cnt++;
+                ValorTile t = board.getTile(r, c);
+                if (t != null && t.getMonster() != null) cnt++;
             }
         }
         return cnt;
     }
 
+    /**
+     * Converts a lane index into a short label for the table.
+     */
     private static String laneName(int lane) {
         switch (lane) {
             case 0: return "TOP";
@@ -154,17 +187,26 @@ public class ValorRoundStatusView {
         }
     }
 
+    /**
+     * Applies a simple color style to HP values for readability.
+     */
     private static String coloredHP(int hp) {
         if (hp <= 0) return RED + "0" + RESET;
         return GREEN + hp + RESET;
     }
 
+    /**
+     * Trims a string to the given maximum length for fixed-width columns.
+     */
     private static String trimTo(String s, int max) {
         if (s == null) return "";
         if (s.length() <= max) return s;
         return s.substring(0, max);
     }
 
+    /**
+     * Centers a string within the given width for section headers.
+     */
     private static String center(String s, int width) {
         if (s == null) s = "";
         if (s.length() >= width) return s;
@@ -178,14 +220,20 @@ public class ValorRoundStatusView {
         return sb.toString();
     }
 
+    /**
+     * Repeats a string a fixed number of times (Java 8 compatible).
+     */
     private static String repeat(String s, int count) {
+        if (s == null) s = "";
+        if (count <= 0) return "";
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < count; i++) sb.append(s);
         return sb.toString();
     }
 
-    // ===== ANSI-safe padding (fixes your alignment issue) =====
-
+    /**
+     * Pads a table cell to a fixed width using ANSI-safe printable length.
+     */
     private static String padCell(String s, int width) {
         if (s == null) s = "";
         int printable = printableLength(s);
@@ -196,12 +244,17 @@ public class ValorRoundStatusView {
         return sb.toString();
     }
 
+    /**
+     * Computes the printable length by stripping ANSI sequences.
+     */
     private static int printableLength(String s) {
         return stripAnsi(s).length();
     }
 
+    /**
+     * Removes ANSI color codes so alignment math uses visible characters only.
+     */
     private static String stripAnsi(String s) {
-        // removes ANSI like \u001B[32m ... \u001B[0m
-        return s.replaceAll("\u001B\\[[;\\d]*m", "");
+        return (s == null) ? "" : s.replaceAll("\u001B\\[[;\\d]*m", "");
     }
 }

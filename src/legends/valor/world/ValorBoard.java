@@ -1,3 +1,12 @@
+
+/**
+ * ValorBoard.java
+ *
+ * Represents the 8x8 game board for Legends of Valor.
+ * Handles board generation, lane structure, terrain placement,
+ * hero/monster positioning, movement validation, rendering,
+ * and win-condition checks.
+ */
 package legends.valor.world;
 
 import java.util.Random;
@@ -5,15 +14,23 @@ import java.util.Random;
 import legends.characters.Hero;
 import legends.characters.Monster;
 
+
 public class ValorBoard {
 
     public static final int ROWS = 8;
     public static final int COLS = 8;
 
+    // Fixed wall columns separating the three lanes
+    private static final int WALL_COL_1 = 2;
+    private static final int WALL_COL_2 = 5;
+
+    // Board tiles store cell type + current occupants (hero/monster)
     private final ValorTile[][] grid;
+
+    // RNG used for randomized lane terrain generation
     private final Random rng = new Random();
 
-    // ANSI colors
+    // ANSI colors used for board rendering
     private static final String RESET   = "\u001B[0m";
     private static final String BOLD    = "\u001B[1m";
     private static final String RED     = "\u001B[31m";
@@ -25,11 +42,12 @@ public class ValorBoard {
     private static final String WHITE   = "\u001B[37m";
 
     public ValorBoard() {
-        grid = new ValorTile[ROWS][COLS];
+        this.grid = new ValorTile[ROWS][COLS];
         generateLayout();
     }
 
     public ValorTile getTile(int row, int col) {
+        if (!inBounds(row, col)) return null;
         return grid[row][col];
     }
 
@@ -37,35 +55,28 @@ public class ValorBoard {
         return row >= 0 && row < ROWS && col >= 0 && col < COLS;
     }
 
-    // =========================================================
-    // BOARD GENERATION
-    // =========================================================
-
+    // Builds initial board tiles: walls, nexus rows, and randomized lane terrain
     private void generateLayout() {
         for (int r = 0; r < ROWS; r++) {
             for (int c = 0; c < COLS; c++) {
 
-                // Lane walls
-                if (c == 2 || c == 5) {
+                if (isWall(r, c)) {
                     grid[r][c] = new ValorTile(ValorCellType.INACCESSIBLE);
                     continue;
                 }
 
-                // Nexus rows
-                if (r == 0 || r == ROWS - 1) {
+                if (isNexus(r, c)) {
                     grid[r][c] = new ValorTile(ValorCellType.NEXUS);
                     continue;
                 }
 
-                // Random terrain in lanes
                 grid[r][c] = new ValorTile(randomLaneType());
             }
         }
     }
 
+    // Randomly selects a lane cell type with a weighted distribution
     private ValorCellType randomLaneType() {
-        // Approx distribution:
-        // 40% PLAIN, 20% BUSH, 20% CAVE, 15% KOULOU, 5% OBSTACLE
         int v = rng.nextInt(20);
 
         if (v < 8)           return ValorCellType.PLAIN;
@@ -75,10 +86,7 @@ public class ValorBoard {
         else                 return ValorCellType.OBSTACLE;
     }
 
-    // =========================================================
-    // LANE & NEXUS HELPERS
-    // =========================================================
-
+    // Nexus rows are the first and last board rows
     public boolean isNexus(int row, int col) {
         return row == 0 || row == ROWS - 1;
     }
@@ -92,11 +100,8 @@ public class ValorBoard {
     }
 
     /**
-     * lane index:
-     *   0 = top lane (cols 0–1)
-     *   1 = mid lane (cols 3–4)
-     *   2 = bot lane (cols 6–7)
-     *  -1 = wall / not in lane
+     * Returns the lane index for a board column.
+     * 0 = top lane (cols 0–1), 1 = mid lane (cols 3–4), 2 = bot lane (cols 6–7), -1 = not a lane.
      */
     public int getLane(int col) {
         if (col == 0 || col == 1) return 0;
@@ -105,36 +110,52 @@ public class ValorBoard {
         return -1;
     }
 
+    // Wall columns are always inaccessible
     public boolean isWall(int row, int col) {
-        return col == 2 || col == 5;
+        return col == WALL_COL_1 || col == WALL_COL_2;
     }
 
-    // =========================================================
-    // MOVEMENT / OCCUPANCY
-    // =========================================================
-
+    // Checks whether a hero can enter a destination tile (bounds + occupancy + accessibility handled by tile)
     public boolean canHeroEnter(int row, int col) {
-        return inBounds(row, col) && grid[row][col].isEmptyForHero();
+        if (!inBounds(row, col)) return false;
+        ValorTile t = grid[row][col];
+        return t != null && t.isEmptyForHero();
     }
 
+    // Checks whether a monster can enter a destination tile (bounds + occupancy + accessibility handled by tile)
     public boolean canMonsterEnter(int row, int col) {
-        return inBounds(row, col) && grid[row][col].isEmptyForMonster();
+        if (!inBounds(row, col)) return false;
+        ValorTile t = grid[row][col];
+        return t != null && t.isEmptyForMonster();
     }
 
+    // Moves a hero between two board coordinates (caller must ensure legality)
     public void moveHero(Hero hero, int fromR, int fromC, int toR, int toC) {
-        grid[fromR][fromC].removeHero();
-        grid[toR][toC].placeHero(hero);
+        if (hero == null) return;
+        if (!inBounds(fromR, fromC) || !inBounds(toR, toC)) return;
+
+        ValorTile from = grid[fromR][fromC];
+        ValorTile to   = grid[toR][toC];
+        if (from == null || to == null) return;
+
+        from.removeHero();
+        to.placeHero(hero);
     }
 
+    // Moves a monster between two board coordinates (caller must ensure legality)
     public void moveMonster(Monster monster, int fromR, int fromC, int toR, int toC) {
-        grid[fromR][fromC].removeMonster();
-        grid[toR][toC].placeMonster(monster);
+        if (monster == null) return;
+        if (!inBounds(fromR, fromC) || !inBounds(toR, toC)) return;
+
+        ValorTile from = grid[fromR][fromC];
+        ValorTile to   = grid[toR][toC];
+        if (from == null || to == null) return;
+
+        from.removeMonster();
+        to.placeMonster(monster);
     }
 
-    // =========================================================
-    // SPAWN HELPERS
-    // =========================================================
-
+    // Returns the two nexus columns that belong to a lane (used for spawns/respawns)
     public int[] getNexusColumnsForLane(int lane) {
         switch (lane) {
             case 0: return new int[]{0, 1};
@@ -144,22 +165,21 @@ public class ValorBoard {
         }
     }
 
+    // Default hero spawn is the first nexus column in the lane on the bottom row
     public int[] getHeroSpawnCell(int lane) {
         int[] cols = getNexusColumnsForLane(lane);
+        if (cols.length == 0) return new int[]{ROWS - 1, 0};
         return new int[]{ROWS - 1, cols[0]};
     }
 
+    // Default monster spawn is the second nexus column in the lane on the top row
     public int[] getMonsterSpawnCell(int lane) {
         int[] cols = getNexusColumnsForLane(lane);
-        // monsters spawn in the RIGHT space of their lane’s Nexus
-        if (cols.length < 2) return new int[]{0, cols[0]};
-        return new int[]{0, cols[1]};
+        if (cols.length == 0) return new int[]{0, 0};
+        return (cols.length < 2) ? new int[]{0, cols[0]} : new int[]{0, cols[1]};
     }
 
-    // =========================================================
-    // PRINTING
-    // =========================================================
-
+    // Renders the full board grid using box characters and colored cell symbols
     public void print() {
         System.out.println();
         System.out.println(MAGENTA + BOLD + "===  LEGENDS OF VALOR MAP  ===" + RESET);
@@ -217,38 +237,27 @@ public class ValorBoard {
         System.out.println("┛");
     }
 
-    /**
-     * Decide what symbol to show in a cell.
-     *
-     * Priority:
-     *   0) BOTH (yellow '*')
-     *   1) Hero (cyan 'H')
-     *   2) Monster (red 'M')
-     *   3) Terrain type (N, X, O, B, C, K, .)
-     */
+    // Returns the display symbol for a cell based on occupancy first, then terrain type
     private String getCellSymbol(ValorTile tile, int row) {
+        if (tile == null) return color(WHITE, "?");
 
-        // ✅ 0) BOTH present?
         if (tile.hasHero() && tile.hasMonster()) {
             return color(YELLOW, "*");
         }
 
-        // 1) Hero present?
         if (tile.hasHero()) {
             return color(CYAN, "H");
         }
 
-        // 2) Monster present?
         if (tile.hasMonster()) {
             return color(RED, "M");
         }
 
-        // 3) Otherwise, terrain
         ValorCellType type = tile.getType();
+        if (type == null) return color(WHITE, "?");
 
         switch (type) {
             case NEXUS:
-                // Monsters' nexus (top row) red, heroes' nexus (bottom row) blue
                 return (row == 0) ? color(RED, "N") : color(BLUE, "N");
             case INACCESSIBLE:
                 return color(WHITE, "X");
@@ -270,24 +279,22 @@ public class ValorBoard {
         return code + text + RESET;
     }
 
-    // =========================================================
-    // VICTORY CHECKS
-    // =========================================================
-
-    /** Heroes win if any hero stands on the monsters' Nexus row (row 0). */
+    // Heroes win when any hero reaches the top nexus row
     public boolean heroesReachedEnemyNexus() {
         int monstersRow = 0;
         for (int c = 0; c < COLS; c++) {
-            if (grid[monstersRow][c].hasHero()) return true;
+            ValorTile t = grid[monstersRow][c];
+            if (t != null && t.hasHero()) return true;
         }
         return false;
     }
 
-    /** Monsters win if any monster stands on the heroes' Nexus row (last row). */
+    // Monsters win when any monster reaches the bottom nexus row
     public boolean monstersReachedHeroesNexus() {
         int heroesRow = ROWS - 1;
         for (int c = 0; c < COLS; c++) {
-            if (grid[heroesRow][c].hasMonster()) return true;
+            ValorTile t = grid[heroesRow][c];
+            if (t != null && t.hasMonster()) return true;
         }
         return false;
     }

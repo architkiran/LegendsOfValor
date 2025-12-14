@@ -1,3 +1,16 @@
+/**
+ * File: HeroTurnMenuView.java
+ * Package: legends.valor.turn
+ *
+ * Purpose:
+ *   Renders the hero turn menu UI for Legends of Valor in the console.
+ *
+ * Responsibilities:
+ *   - Display the active hero's turn header and current position/lane
+ *   - Show hero status values (level, HP/MP, gold) in a readable format
+ *   - Present available command keys and actions for the current turn
+ *   - Provide small formatting helpers for consistent console alignment
+ */
 package legends.valor.turn;
 
 import legends.characters.Hero;
@@ -5,7 +18,7 @@ import legends.valor.world.ValorBoard;
 
 public class HeroTurnMenuView {
 
-    // ANSI
+    // ANSI color codes for menu styling
     private static final String RESET = "\u001B[0m";
     private static final String BOLD  = "\u001B[1m";
     private static final String CYAN  = "\u001B[36m";
@@ -14,10 +27,14 @@ public class HeroTurnMenuView {
     private static final String MAGENTA = "\u001B[35m";
     private static final String WHITE = "\u001B[37m";
 
+    /**
+     * Prints the formatted turn menu for a specific hero.
+     */
     public void renderTurnMenu(int heroNumber, Hero hero, int[] pos, int lane) {
         System.out.println();
         System.out.println(CYAN + BOLD + "┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓" + RESET);
 
+        // Lane/position context helps the player plan movement and actions
         String laneName = laneName(lane);
         String where = (pos == null) ? "(?,?)" : "(" + pos[0] + "," + pos[1] + ")";
         String title = " HERO " + heroNumber + " TURN ";
@@ -26,7 +43,7 @@ public class HeroTurnMenuView {
         System.out.println(CYAN + "┃" + RESET + padCenter(title, 46) + CYAN + "┃" + RESET);
         System.out.println(CYAN + "┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫" + RESET);
 
-        // Stats line
+        // Display key hero stats using project max HP/MP conventions
         double maxHP = hero.getLevel() * 100.0;
         double maxMP = hero.getLevel() * 50.0;
         String stats = "Lv " + hero.getLevel()
@@ -39,7 +56,7 @@ public class HeroTurnMenuView {
 
         System.out.println(CYAN + "┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫" + RESET);
 
-        // Controls (2-column-ish)
+        // Command legend shown in a compact two-column style
         System.out.println(CYAN + "┃ " + RESET + formatKey("W/A/S/D", "Move") + "   " + formatKey("F", "Attack") + padRight("", 18) + CYAN + "┃" + RESET);
         System.out.println(CYAN + "┃ " + RESET + formatKey("C", "Cast Spell") + " " + formatKey("P", "Use Potion") + padRight("", 16) + CYAN + "┃" + RESET);
         System.out.println(CYAN + "┃ " + RESET + formatKey("E", "Equip") + "     " + formatKey("T", "Teleport") + padRight("", 19) + CYAN + "┃" + RESET);
@@ -50,6 +67,9 @@ public class HeroTurnMenuView {
         System.out.println(CYAN + BOLD + "┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛" + RESET);
     }
 
+    /**
+     * Converts a lane index into a human-readable label.
+     */
     private String laneName(int lane) {
         switch (lane) {
             case 0: return "TOP LANE";
@@ -59,10 +79,16 @@ public class HeroTurnMenuView {
         }
     }
 
+    /**
+     * Formats a command key label consistently for the menu legend.
+     */
     private String formatKey(String key, String action) {
         return MAGENTA + "[" + key + "]" + RESET + " " + action;
     }
 
+    /**
+     * Pads a string on the right to a fixed width for alignment.
+     */
     private String padRight(String s, int width) {
         if (s == null) s = "";
         if (s.length() >= width) return s.substring(0, width);
@@ -71,6 +97,9 @@ public class HeroTurnMenuView {
         return sb.toString();
     }
 
+    /**
+     * Centers a string within a fixed width for menu titles.
+     */
     private String padCenter(String s, int width) {
         if (s == null) s = "";
         if (s.length() >= width) return s.substring(0, width);
