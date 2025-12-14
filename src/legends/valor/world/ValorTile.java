@@ -3,17 +3,26 @@ package legends.valor.world;
 import legends.world.Tile;
 import legends.characters.Hero;
 import legends.characters.Monster;
+import legends.characters.Entity;
+import legends.valor.world.terrain.Terrain;
+import legends.valor.world.terrain.TerrainFactory;
 
 public class ValorTile extends Tile {
 
     // ❗was: private final ValorCellType type;
     private ValorCellType type;
 
+    // ✅ NEW: terrain behavior (null if no bonus)
+    private Terrain terrain;
+
     private Hero hero;
     private Monster monster;
 
     public ValorTile(ValorCellType type) {
         this.type = type;
+
+        // ✅ NEW: initialize terrain based on type
+        this.terrain = TerrainFactory.create(type);
     }
 
     public ValorCellType getType() {
@@ -23,6 +32,9 @@ public class ValorTile extends Tile {
     public void setType(ValorCellType newType) {
         if (newType == null) return;
         this.type = newType;
+
+        // ✅ NEW: keep terrain in sync if type changes
+        this.terrain = TerrainFactory.create(newType);
     }
 
     @Override
@@ -33,6 +45,24 @@ public class ValorTile extends Tile {
     @Override
     public String getSymbol() {
         return type.getSymbol();
+    }
+
+    /* ===============================
+       TERRAIN BONUS LIFECYCLE
+       =============================== */
+
+    // ✅ NEW: call when an entity enters this tile
+    public void onEnter(Entity entity) {
+        if (terrain != null) {
+            terrain.onEnter(entity);
+        }
+    }
+
+    // ✅ NEW: call when an entity leaves this tile
+    public void onExit(Entity entity) {
+        if (terrain != null) {
+            terrain.onExit(entity);
+        }
     }
 
     public boolean hasHero() { return hero != null; }

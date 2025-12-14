@@ -30,7 +30,15 @@ public class ValorMovement {
         // ✅ Valor rule: cannot move behind a monster in the same lane (cannot bypass).
         if (wouldHeroBypassMonster(fromR, fromC, toR, toC)) return false;
 
+        // ===== TERRAIN EXIT =====
+        ValorTile fromTile = board.getTile(fromR, fromC);
+        fromTile.onExit(hero);
+
         board.moveHero(hero, fromR, fromC, toR, toC);
+
+        // ===== TERRAIN ENTER =====
+        dest.onEnter(hero);
+
         return true;
     }
 
@@ -53,7 +61,15 @@ public class ValorMovement {
         // ✅ Symmetric rule: monster cannot bypass a hero in its lane.
         if (wouldMonsterBypassHero(fromR, fromC, toR, toC)) return false;
 
+        // ===== TERRAIN EXIT (safe: monsters receive no bonuses) =====
+        ValorTile fromTile = board.getTile(fromR, fromC);
+        fromTile.onExit(monster);
+
         board.moveMonster(monster, fromR, fromC, toR, toC);
+
+        // ===== TERRAIN ENTER =====
+        dest.onEnter(monster);
+
         return true;
     }
 
@@ -81,20 +97,24 @@ public class ValorMovement {
         }
 
         // 2) If teleporting to a DIFFERENT lane:
-        //    You still may NOT land "behind" a monster in the destination lane.
-        //    Interpret "behind" as: you cannot land ABOVE (smaller row) than the
-        //    closest monster to the heroes in that lane.
         int blockRowDest = closestBlockingMonsterRow(ValorBoard.ROWS, toLane);
         if (blockRowDest != Integer.MIN_VALUE && toR < blockRowDest) return false;
 
         return true;
     }
 
-
     public void teleportHeroTo(Hero hero, int toR, int toC) {
         int[] pos = findHero(hero);
         if (pos == null) return;
+
+        // ===== TERRAIN EXIT =====
+        ValorTile fromTile = board.getTile(pos[0], pos[1]);
+        fromTile.onExit(hero);
+
         board.moveHero(hero, pos[0], pos[1], toR, toC);
+
+        // ===== TERRAIN ENTER =====
+        board.getTile(toR, toC).onEnter(hero);
     }
 
     // =========================================================
@@ -104,13 +124,10 @@ public class ValorMovement {
     private boolean wouldHeroBypassMonster(int fromR, int fromC, int toR, int toC) {
         int lane = board.getLane(fromC);
         int laneTo = board.getLane(toC);
-        if (lane == -1 || laneTo == -1) return true; // walls/invalid
-        if (lane != laneTo) return false; // lane switch is allowed; bypass check uses DEST lane's blockers below
+        if (lane == -1 || laneTo == -1) return true;
+        if (lane != laneTo) return false;
 
-        // Find the closest blocking monster ahead of hero (smaller row).
         int blockRow = closestBlockingMonsterRow(fromR, lane);
-
-        // If there is such a monster, hero may not move to a row smaller than blockRow (cannot go "behind" it).
         return blockRow != Integer.MIN_VALUE && toR < blockRow;
     }
 
@@ -122,11 +139,7 @@ public class ValorMovement {
             for (int c : cols) {
                 Monster m = board.getTile(r, c).getMonster();
                 if (m == null || m.getHP() <= 0) continue;
-
-                // "ahead" of hero means r < heroRow
-                if (r < heroRow) {
-                    best = Math.max(best, r); // closest ahead = largest r among those < heroRow
-                }
+                if (r < heroRow) best = Math.max(best, r);
             }
         }
         return best;
@@ -138,10 +151,7 @@ public class ValorMovement {
         if (lane == -1 || laneTo == -1) return true;
         if (lane != laneTo) return false;
 
-        // Find closest blocking hero below monster (larger row).
         int blockRow = closestBlockingHeroRow(fromR, lane);
-
-        // Monster moves "down". It cannot move to a row larger than blockRow (cannot go behind hero).
         return blockRow != Integer.MAX_VALUE && toR > blockRow;
     }
 
@@ -153,11 +163,7 @@ public class ValorMovement {
             for (int c : cols) {
                 Hero h = board.getTile(r, c).getHero();
                 if (h == null || h.getHP() <= 0) continue;
-
-                // "below" monster means r > monsterRow
-                if (r > monsterRow) {
-                    best = Math.min(best, r); // closest below = smallest r among those > monsterRow
-                }
+                if (r > monsterRow) best = Math.min(best, r);
             }
         }
         return best;
