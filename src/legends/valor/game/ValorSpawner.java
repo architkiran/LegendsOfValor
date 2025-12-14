@@ -1,3 +1,16 @@
+/**
+ * File: ValorSpawner.java
+ * Package: legends.valor.game
+ *
+ * Purpose:
+ *   Handles initial placement and spawning of heroes and monsters on the Valor board.
+ *
+ * Responsibilities:
+ *   - Place heroes onto the heroes' Nexus row using lane-based spawn rules
+ *   - Support both default lane placement and explicit hero-to-lane assignment
+ *   - Spawn lane monsters at configured monster spawn cells
+ *   - Provide consistent console feedback for spawn events
+ */
 package legends.valor.game;
 
 import java.util.ArrayList;
@@ -14,9 +27,10 @@ import legends.valor.world.ValorTile;
 
 public class ValorSpawner {
 
+    // Board used to resolve lane spawn coordinates and access tiles
     private final ValorBoard board;
 
-    // Simple ANSI (optional, but matches your style)
+    // ANSI colors for spawn feedback output
     private static final String RESET = "\u001B[0m";
     private static final String GREEN = "\u001B[92m";
     private static final String CYAN  = "\u001B[96m";
@@ -27,8 +41,8 @@ public class ValorSpawner {
     }
 
     /**
-     * Backwards-compatible default placement:
-     * hero0->lane0, hero1->lane1, hero2->lane2
+     * Default hero placement policy:
+     * hero0->lane0, hero1->lane1, hero2->lane2.
      */
     public void placeHeroesOnBoard(Party party) {
         if (party == null) return;
@@ -46,7 +60,8 @@ public class ValorSpawner {
     }
 
     /**
-     * NEW: place heroes using explicit lane assignment.
+     * Places heroes using an explicit lane assignment mapping.
+     * Falls back to default placement when no mapping is provided.
      */
     public void placeHeroesOnBoard(Party party, Map<Hero, Integer> heroToLane) {
         if (party == null) return;
@@ -62,9 +77,9 @@ public class ValorSpawner {
             Hero h = heroes.get(i);
             if (h == null) continue;
 
+            // Use explicit assignment when present; otherwise fallback by index
             Integer lane = heroToLane.get(h);
             if (lane == null) {
-                // if missing assignment, fallback lane by index
                 lane = Integer.valueOf(Math.min(i, 2));
             }
 
@@ -72,9 +87,13 @@ public class ValorSpawner {
         }
     }
 
+    /**
+     * Places a single hero into the specified lane using board spawn rules.
+     * If the primary spawn cell is occupied, attempts the alternate nexus cell in the same lane.
+     */
     private void placeHeroInLane(Hero hero, int lane) {
         if (hero == null) return;
-        if (lane < 0 || lane > 2) lane = 1; // fallback MID
+        if (lane < 0 || lane > 2) lane = 1;
 
         int[] spawn = board.getHeroSpawnCell(lane);
         if (spawn == null || spawn.length < 2) {
@@ -87,7 +106,7 @@ public class ValorSpawner {
 
         ValorTile tile = board.getTile(row, colUsed);
 
-        // If spawn occupied, try the other nexus column in same lane
+        // If occupied, try the other heroes' nexus column for the same lane
         if (tile.getHero() != null) {
             int[] cols = board.getNexusColumnsForLane(lane);
             if (cols != null && cols.length == 2) {
@@ -97,7 +116,7 @@ public class ValorSpawner {
 
                 if (alt.getHero() == null) {
                     tile = alt;
-                    colUsed = altCol; // ✅ track actual col we used
+                    colUsed = altCol;
                 } else {
                     System.out.println("Both hero nexus cells occupied in lane " + lane
                             + ". Cannot place " + hero.getName());
@@ -106,9 +125,10 @@ public class ValorSpawner {
             }
         }
 
+        // Commit placement on the selected tile
         tile.placeHero(hero);
 
-        // ✅ nicer, consistent output
+        // Spawn confirmation output for debugging and player feedback
         System.out.println(GREEN + "✔ " + RESET
                 + hero.getName()
                 + " spawned in " + CYAN + laneName(lane) + RESET
@@ -116,17 +136,22 @@ public class ValorSpawner {
                 + " at (" + row + "," + colUsed + ")");
     }
 
-    // ---------------- existing monster spawn unchanged (but nicer print) ----------------
-
+    /**
+     * Spawns up to one monster per lane at the configured monster spawn cell.
+     *
+     * @return list of monsters successfully spawned onto the board
+     */
     public List<Monster> spawnLaneMonsters(Party party) {
         List<Monster> laneMonsters = new ArrayList<Monster>();
 
+        // Generate a candidate pool sized for the current party strength
         List<Monster> generated = MonsterFactory.generateMonstersForParty(party);
         if (generated == null || generated.isEmpty()) {
             System.out.println("No monsters generated for Legends of Valor.");
             return laneMonsters;
         }
 
+        // Randomize selection so lanes don't always get the same monsters
         Collections.shuffle(generated);
 
         int genIdx = 0;
@@ -141,6 +166,7 @@ public class ValorSpawner {
             ValorTile tile = board.getTile(row, col);
             if (tile.getMonster() != null) continue;
 
+            // Skip any null entries in the generated pool defensively
             while (genIdx < generated.size() && generated.get(genIdx) == null) genIdx++;
             if (genIdx >= generated.size()) break;
 
@@ -160,8 +186,9 @@ public class ValorSpawner {
         return laneMonsters;
     }
 
-    // ---------------- small helpers ----------------
-
+    /**
+     * Returns the lane label for display.
+     */
     private String laneName(int lane) {
         switch (lane) {
             case 0: return "TOP";
@@ -171,6 +198,9 @@ public class ValorSpawner {
         }
     }
 
+    /**
+     * Returns the board column range associated with a lane.
+     */
     private String laneCols(int lane) {
         switch (lane) {
             case 0: return "(cols 0–1)";

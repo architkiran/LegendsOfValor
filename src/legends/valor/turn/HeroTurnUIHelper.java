@@ -1,3 +1,16 @@
+/**
+ * File: HeroTurnUIHelper.java
+ * Package: legends.valor.turn
+ *
+ * Purpose:
+ *   Provides reusable console-selection prompts for Legends of Valor hero turn actions.
+ *
+ * Responsibilities:
+ *   - Prompt the player to select targets, items, and destinations from lists
+ *   - Validate numeric selections and return the chosen object
+ *   - Extract typed item lists (spells, potions, weapons, armor) from inventory
+ *   - Centralize turn UI selection logic for reuse across action classes
+ */
 package legends.valor.turn;
 
 import legends.characters.Hero;
@@ -10,12 +23,16 @@ import java.util.List;
 
 public class HeroTurnUIHelper {
 
+    // Input abstraction used by turn UI helpers for prompting the player
     private final ValorInput input;
 
     public HeroTurnUIHelper(ValorInput input) {
         this.input = input;
     }
 
+    /**
+     * Prompts the player to choose a monster target from a list.
+     */
     public Monster pickMonster(List<Monster> monsters) {
         if (monsters == null || monsters.isEmpty()) return null;
         if (monsters.size() == 1) return monsters.get(0);
@@ -29,6 +46,9 @@ public class HeroTurnUIHelper {
         return idx < 0 ? null : monsters.get(idx);
     }
 
+    /**
+     * Prompts the player to choose a spell from a list.
+     */
     public Spell pickSpell(List<Spell> spells) {
         if (spells == null || spells.isEmpty()) return null;
 
@@ -44,6 +64,9 @@ public class HeroTurnUIHelper {
         return idx < 0 ? null : spells.get(idx);
     }
 
+    /**
+     * Prompts the player to choose a potion from a list.
+     */
     public Potion pickPotion(List<Potion> potions) {
         if (potions == null || potions.isEmpty()) return null;
 
@@ -57,6 +80,9 @@ public class HeroTurnUIHelper {
         return idx < 0 ? null : potions.get(idx);
     }
 
+    /**
+     * Prompts the player to choose a weapon from a list.
+     */
     public Weapon pickWeapon(List<Weapon> weapons) {
         if (weapons == null || weapons.isEmpty()) return null;
 
@@ -70,6 +96,9 @@ public class HeroTurnUIHelper {
         return idx < 0 ? null : weapons.get(idx);
     }
 
+    /**
+     * Prompts the player to choose an armor piece from a list.
+     */
     public Armor pickArmor(List<Armor> armors) {
         if (armors == null || armors.isEmpty()) return null;
 
@@ -83,6 +112,9 @@ public class HeroTurnUIHelper {
         return idx < 0 ? null : armors.get(idx);
     }
 
+    /**
+     * Prompts the player to choose another hero (used for teleport targeting).
+     */
     public Hero pickHero(List<Hero> heroes) {
         if (heroes == null || heroes.isEmpty()) return null;
 
@@ -95,6 +127,9 @@ public class HeroTurnUIHelper {
         return idx < 0 ? null : heroes.get(idx);
     }
 
+    /**
+     * Prompts the player to choose a board coordinate from candidate destinations.
+     */
     public int[] pickPosition(List<int[]> positions) {
         if (positions == null || positions.isEmpty()) return null;
 
@@ -107,6 +142,9 @@ public class HeroTurnUIHelper {
         return idx < 0 ? null : positions.get(idx);
     }
 
+    /**
+     * Reads a 1-based selection index and converts it to a 0-based list index.
+     */
     public int readIndex(String prompt, int size) {
         String s = input.readLine(prompt);
         if (s == null) return -1;
@@ -120,8 +158,9 @@ public class HeroTurnUIHelper {
         }
     }
 
-    // ---------------- Inventory helpers ----------------
-
+    /**
+     * Extracts all Spell items from an inventory into a typed list.
+     */
     public List<Spell> getSpells(Inventory inv) {
         List<Spell> out = new ArrayList<>();
         if (inv == null) return out;
@@ -129,6 +168,9 @@ public class HeroTurnUIHelper {
         return out;
     }
 
+    /**
+     * Extracts all Potion items from an inventory into a typed list.
+     */
     public List<Potion> getPotions(Inventory inv) {
         List<Potion> out = new ArrayList<>();
         if (inv == null) return out;
@@ -136,6 +178,9 @@ public class HeroTurnUIHelper {
         return out;
     }
 
+    /**
+     * Extracts all Weapon items from an inventory into a typed list.
+     */
     public List<Weapon> getWeapons(Inventory inv) {
         List<Weapon> out = new ArrayList<>();
         if (inv == null) return out;
@@ -143,6 +188,9 @@ public class HeroTurnUIHelper {
         return out;
     }
 
+    /**
+     * Extracts all Armor items from an inventory into a typed list.
+     */
     public List<Armor> getArmors(Inventory inv) {
         List<Armor> out = new ArrayList<>();
         if (inv == null) return out;

@@ -1,3 +1,16 @@
+/**
+ * File: ValorLaneSelector.java
+ * Package: legends.valor.game
+ *
+ * Purpose:
+ *   Collects user input to assign each of the three heroes to a Valor lane.
+ *
+ * Responsibilities:
+ *   - Validate that exactly three heroes are provided for lane assignment
+ *   - Prompt the user to choose a unique lane for each hero
+ *   - Return a mapping from hero to lane index for match setup
+ *   - Display formatted lane selection instructions and summary output
+ */
 package legends.valor.game;
 
 import legends.characters.Hero;
@@ -10,10 +23,12 @@ import java.util.Scanner;
 
 public class ValorLaneSelector {
 
+    // Lane identifiers used throughout the Valor game mode
     public static final int TOP = 0;
     public static final int MID = 1;
     public static final int BOT = 2;
 
+    // Console input source for lane selection
     private final Scanner in;
 
     // ANSI (same style you use elsewhere)
@@ -25,15 +40,22 @@ public class ValorLaneSelector {
     private static final String RED   = "\u001B[91m";
     private static final String MAG   = "\u001B[95m";
 
+    // Fixed width used for the lane-selection UI box
     private static final int BOX_W = 62;
 
     public ValorLaneSelector(Scanner in) {
         this.in = in;
     }
 
+    /**
+     * Prompts the user to assign each hero in the party to a distinct lane.
+     *
+     * @return mapping from hero to lane constant (TOP/MID/BOT)
+     */
     public Map<Hero, Integer> chooseLanes(Party party) {
         Map<Hero, Integer> result = new HashMap<Hero, Integer>();
 
+        // Lane selection is only defined for a party of exactly three heroes
         if (party == null) return result;
         List<Hero> heroes = party.getHeroes();
         if (heroes == null || heroes.size() != 3) {
@@ -41,8 +63,10 @@ public class ValorLaneSelector {
             return result;
         }
 
+        // Explain lane numbering and corresponding board columns
         printHeaderBox();
 
+        // Tracks which lanes have already been assigned
         boolean[] used = new boolean[3];
 
         for (int i = 0; i < heroes.size(); i++) {
@@ -59,6 +83,7 @@ public class ValorLaneSelector {
                     continue;
                 }
 
+                // Enforce one hero per lane
                 if (used[lane.intValue()]) {
                     System.out.println(YELL + "That lane is already taken. Pick a different lane." + RESET);
                     continue;
@@ -67,16 +92,16 @@ public class ValorLaneSelector {
                 used[lane.intValue()] = true;
                 result.put(h, lane);
 
+                // Immediate confirmation for user feedback
                 System.out.println(GREEN + "✔ " + RESET + h.getName() + " -> " + laneName(lane.intValue()) + laneCols(lane.intValue()));
                 break;
             }
         }
 
+        // Display final assignment summary table
         printSummary(result);
         return result;
     }
-
-    // ---------------- UI helpers ----------------
 
     private void printHeaderBox() {
         System.out.println();
@@ -116,8 +141,11 @@ public class ValorLaneSelector {
         System.out.println();
     }
 
-    // ---------------- parsing + lane meta ----------------
-
+    /**
+     * Parses a lane input string and validates it as 0, 1, or 2.
+     *
+     * @return Integer lane value, or null if invalid
+     */
     private Integer parseLane(String s) {
         if (s == null) return null;
         s = s.trim();
@@ -133,6 +161,9 @@ public class ValorLaneSelector {
         return Integer.valueOf(v);
     }
 
+    /**
+     * Returns a colored lane label for immediate user feedback.
+     */
     private String laneName(int lane) {
         switch (lane) {
             case TOP: return CYAN + "TOP" + RESET;
@@ -142,6 +173,9 @@ public class ValorLaneSelector {
         }
     }
 
+    /**
+     * Returns a plain lane label for summary table formatting.
+     */
     private String laneNamePlain(int lane) {
         switch (lane) {
             case TOP: return "TOP";
@@ -151,10 +185,16 @@ public class ValorLaneSelector {
         }
     }
 
+    /**
+     * Returns a dimmed column-range string associated with a lane.
+     */
     private String laneCols(int lane) {
         return dim(" " + laneColsPlain(lane));
     }
 
+    /**
+     * Returns the board column range represented by a lane.
+     */
     private String laneColsPlain(int lane) {
         switch (lane) {
             case TOP: return "(0-1)";
@@ -164,14 +204,18 @@ public class ValorLaneSelector {
         }
     }
 
-    // ---------------- tiny string utils (Java 8) ----------------
-
+    /**
+     * Repeats a string a fixed number of times (Java 8 compatible).
+     */
     private String repeat(String s, int count) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < count; i++) sb.append(s);
         return sb.toString();
     }
 
+    /**
+     * Centers a string within a given width using ANSI-stripped length.
+     */
     private String center(String text, int width) {
         String clean = stripAnsi(text);
         if (clean.length() >= width) return text;
@@ -179,23 +223,34 @@ public class ValorLaneSelector {
         return repeat(" ", pad) + text;
     }
 
+    /**
+     * Pads a string on the right for consistent table alignment.
+     */
     private String pad(String s, int width) {
         if (s == null) s = "";
         if (s.length() >= width) return s;
         return s + repeat(" ", width - s.length());
     }
 
+    /**
+     * Trims a string to a maximum length for fixed-width formatting.
+     */
     private String trimTo(String s, int max) {
         if (s == null) return "";
         if (s.length() <= max) return s;
         return s.substring(0, max);
     }
 
+    /**
+     * Applies a simple dimmed style for secondary UI hints.
+     */
     private String dim(String s) {
-        // simple dim effect using yellow-ish (works in most terminals)
         return YELL + s + RESET;
     }
 
+    /**
+     * Removes ANSI sequences so visible width calculations are accurate.
+     */
     private String stripAnsi(String s) {
         return s.replaceAll("\\u001B\\[[;\\d]*m", "");
     }

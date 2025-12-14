@@ -1,16 +1,24 @@
+/**
+ * File: LegendsApp.java
+ * Package: legends.game
+ *
+ * Purpose:
+ *   Serves as the main entry point for the Legends application.
+ *
+ * Responsibilities:
+ *   - Display the top-level game selection menu
+ *   - Accept and validate user input for game choice
+ *   - Launch the selected game mode
+ *   - Manage application-level control flow and exit behavior
+ */
 package legends.game;
 
 import java.util.Scanner;
 import legends.valor.game.ValorGame;
 
-/**
- * Top-level application for the Legends project.
- * Shows the main menu, lets the user pick which game to play,
- * then launches that game.
- */
 public class LegendsApp implements Game {
 
-    // Simple ANSI colors
+    // ANSI color codes for console styling
     private static final String RESET   = "\u001B[0m";
     private static final String BOLD    = "\u001B[1m";
     private static final String CYAN    = "\u001B[36m";
@@ -19,23 +27,24 @@ public class LegendsApp implements Game {
 
     @Override
     public void run() {
+        // Shared scanner for reading user input
         Scanner in = new Scanner(System.in);
 
         boolean running = true;
         while (running) {
 
-            // ========= HEADER =========
+            // Render application header
             System.out.println();
             System.out.println(MAGENTA + "══════════════════════════════════════════════" + RESET);
-            System.out.println("          " + BOLD + "WELCOME TO LEGENDS" + RESET);
+            System.out.println("          " + BOLD + "WELCOME TO MONSTERS & HEROES" + RESET);
             System.out.println(MAGENTA + "══════════════════════════════════════════════" + RESET);
             System.out.println();
 
-            // Short description
+            // Brief description of available choices
             System.out.println("Choose which adventure you want to play:");
             System.out.println();
 
-            // ========= MENU BOX =========
+            // Display game selection menu
             System.out.println(CYAN + "  [1] Legends: Monsters & Heroes" + RESET);
             System.out.println("      Classic exploration with random battles,");
             System.out.println("      markets, and turn-based combat.");
@@ -46,11 +55,13 @@ public class LegendsApp implements Game {
             System.out.println(YELLOW + "  [Q] Quit" + RESET);
             System.out.println();
 
+            // Read and normalize user input
             System.out.print("Enter your choice (1 / 2 / Q): ");
             String input = in.nextLine().trim().toUpperCase();
 
             Game selectedGame = null;
 
+            // Determine which game to launch based on input
             switch (input) {
                 case "1":
                     selectedGame = new MonstersAndHeroesGame();
@@ -60,29 +71,33 @@ public class LegendsApp implements Game {
                     break;
                 case "Q":
                     running = false;
-                    continue;   // skip launching a game
+                    continue;   // skip launching a game and exit loop
                 default:
                     System.out.println("\nInvalid choice. Please type 1, 2, or Q.\n");
                     continue;
             }
 
-            // Launch the chosen game
+            // Launch the chosen game instance
             System.out.println();
             System.out.println(MAGENTA + "Launching " + gameName(selectedGame) + "..." + RESET);
             System.out.println();
 
             selectedGame.run();
 
-            // When the game returns, show a small prompt before redrawing the menu
+            // Pause before returning to the main menu
             System.out.println();
             System.out.print("Press ENTER to return to the main menu...");
             in.nextLine();
         }
 
+        // Final exit message
         System.out.println();
         System.out.println("Thanks for playing " + BOLD + "Legends" + RESET + "!");
     }
 
+    /**
+     * Resolves a user-friendly name for the selected game.
+     */
     private String gameName(Game game) {
         if (game instanceof ValorGame) {
             return "Legends of Valor";

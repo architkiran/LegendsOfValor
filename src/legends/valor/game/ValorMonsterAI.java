@@ -1,3 +1,16 @@
+/**
+ * File: ValorMonsterAI.java
+ * Package: legends.valor.game
+ *
+ * Purpose:
+ *   Determines movement decisions for monsters during Legends of Valor gameplay.
+ *
+ * Responsibilities:
+ *   - Choose movement directions for monsters based on lane-based rules
+ *   - Prefer advancing toward the heroes' Nexus with fallback sidestep behavior
+ *   - Delegate legality and execution of movement to ValorMovement
+ *   - Add small randomness to reduce predictable sidestep patterns
+ */
 package legends.valor.game;
 
 import java.util.ArrayList;
@@ -9,17 +22,12 @@ import legends.valor.world.ValorBoard;
 import legends.valor.world.ValorDirection;
 import legends.valor.world.ValorMovement;
 
-/**
- * Encapsulates the "brain" for monster movement in Legends of Valor.
- *
- * Behaviour:
- *  1. Try to move SOUTH (towards heroes' Nexus)
- *  2. If blocked, try to sidestep WEST or EAST within the same lane
- *  3. If still blocked, optionally step NORTH (back) to jiggle
- */
 public class ValorMonsterAI {
 
+    // Board context is used to identify lane boundaries for sidesteps
     private final ValorBoard board;
+
+    // Movement engine enforces legality and performs actual relocation
     private final ValorMovement movement;
 
     public ValorMonsterAI(ValorBoard board, ValorMovement movement) {
@@ -27,35 +35,46 @@ public class ValorMonsterAI {
         this.movement = movement;
     }
 
-    /** Advance a single monster one step according to the AI rules. */
+    /**
+     * Advances a monster by one step following the AI movement priorities.
+     */
     public void advanceMonster(Monster monster) {
         if (monster == null) return;
+        if (board == null || movement == null) return;
 
-        // 1) Try straight south first
+        // Primary objective: move toward the heroes' Nexus
         if (movement.moveMonster(monster, ValorDirection.SOUTH)) {
             return;
         }
 
-        // 2) If blocked, attempt sideways movement inside the same lane
+        // If blocked, determine current lane so sidesteps remain within lane boundaries
         int[] pos = movement.findMonster(monster);
-        if (pos == null) return;
+        if (pos == null || pos.length < 2) return;
 
         int col = pos[1];
         int lane = board.getLane(col);
-        if (lane == -1) return; // not on a lane (shouldn't happen for lane monsters)
+        if (lane == -1) return;
 
-        List<ValorDirection> sides = new ArrayList<>();
+        // Randomize sidestep order to reduce identical movement patterns across monsters
+        List<ValorDirection> sides = new ArrayList<ValorDirection>();
         sides.add(ValorDirection.WEST);
         sides.add(ValorDirection.EAST);
-        Collections.shuffle(sides);   // little randomness so they don't all pick same side
+        Collections.shuffle(sides);
 
-        for (ValorDirection dir : sides) {
+        for (int i = 0; i < sides.size(); i++) {
+            ValorDirection dir = sides.get(i);
+            if (dir == null) continue;
+
+            // Enforce lane constraint before attempting movement
+            int toCol = col + dir.deltaCol();
+            if (board.getLane(toCol) != lane) continue;
+
             if (movement.moveMonster(monster, dir)) {
                 return;
             }
         }
 
-        // 3) Still blocked – tiny jiggle backwards
+        // Final fallback: attempt a small backward move if no forward/side move is possible
         movement.moveMonster(monster, ValorDirection.NORTH);
     }
 }

@@ -1,3 +1,16 @@
+/**
+ * File: ValorLaneState.java
+ * Package: legends.valor.game
+ *
+ * Purpose:
+ *   Implements the interactive lane gameplay state for Legends of Valor.
+ *
+ * Responsibilities:
+ *   - Render the Valor board and prompt the active hero for input
+ *   - Interpret player commands for movement, hero cycling, and quitting
+ *   - Delegate hero movement rules to ValorMovement
+ *   - Trigger monster advancement after successful hero actions
+ */
 package legends.valor.game;
 
 import java.util.List;
@@ -9,23 +22,30 @@ import legends.valor.world.ValorBoard;
 import legends.valor.world.ValorDirection;
 import legends.valor.world.ValorMovement;
 
-/**
- * Main lane state:
- *  - Shows the Valor board
- *  - Lets heroes move with W/A/S/D
- *  - N cycles to next hero
- *  - After a successful hero move, monsters advance toward heroes' Nexus
- */
 public class ValorLaneState implements ValorState {
 
+    // Parent game/controller reference for lane state orchestration
     private final ValorGame game;
+
+    // Board used for rendering and movement constraints
     private final ValorBoard board;
+
+    // Movement helper that validates and executes hero moves
     private final ValorMovement movement;
+
+    // Party containing the heroes participating in this lane
     private final Party party;
+
+    // Monsters assigned to this lane (advanced by AI each turn)
     private final List<Monster> laneMonsters;
+
+    // AI responsible for monster advancement behavior
     private final ValorMonsterAI monsterAI;
 
+    // Tracks which hero is currently active for player commands
     private int heroIndex = 0;
+
+    // Marks whether this state should exit
     private boolean finished = false;
 
     public ValorLaneState(ValorGame game,
@@ -42,6 +62,10 @@ public class ValorLaneState implements ValorState {
         this.monsterAI = monsterAI;
     }
 
+    /**
+     * Returns the currently active hero for this lane turn.
+     * Ensures the index is valid before accessing the party list.
+     */
     private Hero getActiveHero() {
         List<Hero> heroes = party.getHeroes();
         if (heroes.isEmpty())
@@ -53,8 +77,10 @@ public class ValorLaneState implements ValorState {
 
     @Override
     public void render() {
-        board.print();   // your pretty white-grid LoV board
+        // Display the current state of the lane board
+        board.print();
 
+        // Prompt for the active hero's command
         Hero active = getActiveHero();
         System.out.println("Controls: W = up | A = left | S = down | D = right |");
         System.out.println("          N = next hero | Q = quit LoV");
@@ -85,6 +111,7 @@ public class ValorLaneState implements ValorState {
                 if (!moved) {
                     System.out.println("Cannot move there!");
                 } else {
+                    // Monsters advance only after a successful hero action
                     doMonstersTurn();
                 }
                 return;
@@ -94,6 +121,9 @@ public class ValorLaneState implements ValorState {
         }
     }
 
+    /**
+     * Maps a movement command to a direction and delegates execution to ValorMovement.
+     */
     private boolean handleHeroMovement(Hero hero, char cmd) {
         return switch (cmd) {
             case 'W' -> movement.moveHero(hero, ValorDirection.NORTH);
@@ -104,13 +134,16 @@ public class ValorLaneState implements ValorState {
         };
     }
 
+    /**
+     * Advances living monsters in this lane using the provided AI controller.
+     */
     private void doMonstersTurn() {
         if (laneMonsters == null || laneMonsters.isEmpty()) return;
 
         System.out.println("\n\u001B[31mMonsters advance toward your Nexus...\u001B[0m\n");
 
         for (Monster m : laneMonsters) {
-            if (m.getHP() <= 0) continue;   // dead monster, ignore
+            if (m.getHP() <= 0) continue;
             monsterAI.advanceMonster(m);
         }
     }

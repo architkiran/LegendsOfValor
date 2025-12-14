@@ -1,6 +1,20 @@
+/**
+ * File: ValorPostGameController.java
+ * Package: legends.valor.game
+ *
+ * Purpose:
+ *   Manages end-of-match flow for Legends of Valor after a match concludes.
+ *
+ * Responsibilities:
+ *   - Finalize game result and build a persistent GameRecord from GameStats
+ *   - Update and query leaderboard data for end-screen display
+ *   - Delegate end-screen rendering to ValorEndScreenRenderer
+ *   - Provide save/load options for the most recent match record
+ */
 package legends.valor.game;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -18,9 +32,16 @@ import static legends.ui.ConsoleUI.*;
 
 public class ValorPostGameController {
 
+    // Shared scanner for post-game input prompts
     private final Scanner in;
+
+    // Persistence utility for saving/loading the last completed match
     private final SaveManager saveManager;
+
+    // Leaderboard service for storing and retrieving ranked match entries
     private final LeaderboardService leaderboard;
+
+    // Renderer responsible for displaying the end screen and loaded match views
     private final ValorEndScreenRenderer renderer;
 
     public ValorPostGameController(Scanner in,
@@ -33,30 +54,46 @@ public class ValorPostGameController {
         this.renderer = renderer;
     }
 
+    /**
+     * Executes the post-game flow:
+     * finalize stats, update leaderboard, render end screen, and handle save/load input.
+     */
     public void handle(ValorMatch.Outcome outcome, GameStats gameStats, int roundsPlayed) {
+        // Guard against missing stats to avoid post-game crashes
         if (gameStats == null) {
-            ConsoleUI.boxed("POST GAME", List.of(RED + "No stats available for this match." + RESET));
+            ConsoleUI.boxed("POST GAME", Arrays.asList(RED + "No stats available for this match." + RESET));
             return;
         }
 
+        // Translate match outcome into GameStats result enum
         GameStats.GameResult result =
                 (outcome == ValorMatch.Outcome.HERO_WIN) ? GameStats.GameResult.HEROES_WIN :
                 (outcome == ValorMatch.Outcome.MONSTER_WIN) ? GameStats.GameResult.MONSTERS_WIN :
                 GameStats.GameResult.QUIT;
 
+        // Finalize lifecycle timestamps and outcome on the stats object
         gameStats.markEnded(result);
+
+        // Build a serializable record used by persistence and leaderboard services
         GameRecord record = buildRecordFromStats(gameStats, roundsPlayed);
 
-        // update leaderboard (safe)
+        // Attempt to update leaderboard; failure should not block post-game flow
         try { leaderboard.add(record); } catch (Exception ignored) {}
 
-        List<LeaderboardEntry> top10;
-        try { top10 = leaderboard.top(10); }
-        catch (Exception e) { top10 = new ArrayList<>(); }
+        List<LeaderboardEntry> top3;
+        List<LeaderboardEntry> recent5;
 
-        renderer.renderEndScreen(record, top10);
+        // Query leaderboard for ranked and recent views; degrade gracefully on failure
+        try { top3 = leaderboard.topByScore(3); }
+        catch (Exception e) { top3 = new ArrayList<LeaderboardEntry>(); }
 
-        // save/load prompt
+        try { recent5 = leaderboard.recent(5); }
+        catch (Exception e) { recent5 = new ArrayList<LeaderboardEntry>(); }
+
+        // Render end screen summary, including leaderboard panels
+        renderer.renderEndScreen(record, top3, recent5);
+
+        // Prompt user for optional save/load actions before continuing
         while (true) {
             System.out.print("\n" + CYAN + "[S]" + RESET + " Save  "
                     + CYAN + "[L]" + RESET + " Load  "
@@ -68,20 +105,20 @@ public class ValorPostGameController {
             if (line.startsWith("S")) {
                 try {
                     saveManager.saveLastGame(record);
-                    ConsoleUI.boxed("SAVED", List.of(GREEN + "Saved last match to disk." + RESET));
+                    ConsoleUI.boxed("SAVED", Arrays.asList(GREEN + "Saved last match to disk." + RESET));
                 } catch (Exception e) {
-                    ConsoleUI.boxed("SAVE FAILED", List.of(RED + e.getMessage() + RESET));
+                    ConsoleUI.boxed("SAVE FAILED", Arrays.asList(RED + e.getMessage() + RESET));
                 }
             } else if (line.startsWith("L")) {
                 try {
                     GameRecord loaded = saveManager.loadLastGame();
                     if (loaded == null) {
-                        ConsoleUI.boxed("LOAD", List.of(RED + "No saved match found yet." + RESET));
+                        ConsoleUI.boxed("LOAD", Arrays.asList(RED + "No saved match found yet." + RESET));
                     } else {
                         renderer.renderLoadedMatch(loaded);
                     }
                 } catch (Exception e) {
-                    ConsoleUI.boxed("LOAD FAILED", List.of(RED + e.getMessage() + RESET));
+                    ConsoleUI.boxed("LOAD FAILED", Arrays.asList(RED + e.getMessage() + RESET));
                 }
             } else {
                 System.out.println("Invalid option.");
@@ -89,6 +126,9 @@ public class ValorPostGameController {
         }
     }
 
+    /**
+     * Converts aggregated GameStats into a serializable GameRecord.
+     */
     private GameRecord buildRecordFromStats(GameStats stats, int roundsPlayed) {
         GameRecord rec = new GameRecord(
                 stats.getMode(),
@@ -98,6 +138,7 @@ public class ValorPostGameController {
                 roundsPlayed
         );
 
+        // Capture per-hero performance snapshot for persistence/leaderboard summaries
         for (HeroStats hs : stats.getHeroStats()) {
             Hero h = hs.getHero();
             rec.heroes.add(new GameRecord.HeroRecord(

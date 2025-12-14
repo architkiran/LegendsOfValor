@@ -1,21 +1,36 @@
+/**
+ * File: ValorState.java
+ * Package: legends.valor.game
+ *
+ * Purpose:
+ *   Defines a common interface for Legends of Valor gameplay states.
+ *
+ * Responsibilities:
+ *   - Standardize state rendering, input handling, and update behavior
+ *   - Allow the game controller to transition between different states cleanly
+ *   - Provide a consistent mechanism to determine when a state should exit
+ */
 package legends.valor.game;
 
-/**
- * Generic state interface for Legends of Valor.
- *
- * Mirrors the Monsters & Heroes GameState idea, but decoupled from LegendsGame.
- */
 public interface ValorState {
 
-    /** Draw / print this state's UI. */
+    /**
+     * Renders this state's UI to the console.
+     */
     void render();
 
-    /** Handle a single line of user input. */
+    /**
+     * Processes a single line of user input for this state.
+     */
     void handleInput(String input);
 
-    /** Background updates for this state (win/lose checks, respawns, etc.). */
+    /**
+     * Performs state updates independent of direct user input.
+     */
     void update(ValorGame game);
 
-    /** Whether this state is finished and should be left. */
+    /**
+     * Indicates whether the state has completed and should be exited.
+     */
     boolean isFinished();
 }

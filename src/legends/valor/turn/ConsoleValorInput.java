@@ -1,3 +1,16 @@
+/**
+ * File: ConsoleValorInput.java
+ * Package: legends.valor.turn
+ *
+ * Purpose:
+ *   Provides console-based input handling for Legends of Valor turn actions.
+ *
+ * Responsibilities:
+ *   - Read raw input lines from the player through a shared Scanner
+ *   - Interpret hero action commands (move, wait, attack, quit)
+ *   - Delegate movement and combat execution to ValorMovement and ValorCombat
+ *   - Support target selection when multiple monsters are in range
+ */
 package legends.valor.turn;
 
 import java.util.List;
@@ -9,21 +22,21 @@ import legends.valor.combat.ValorCombat;
 import legends.valor.world.ValorDirection;
 import legends.valor.world.ValorMovement;
 
-/**
- * Console-based input for Legends of Valor.
- * Implements ValorInput so it can be used by controllers,
- * and also provides convenience helpers for turn actions.
- */
 public class ConsoleValorInput implements ValorInput {
 
+    // Turn outcome used by command loops to decide whether to continue prompting
     public enum ActionResult { TURN_TAKEN, INVALID, QUIT }
 
+    // Shared scanner used to read console input
     private final Scanner in;
 
     public ConsoleValorInput(Scanner in) {
         this.in = in;
     }
 
+    /**
+     * Reads a single input line after printing the given prompt.
+     */
     @Override
     public String readLine(String prompt) {
         System.out.print(prompt);
@@ -31,8 +44,8 @@ public class ConsoleValorInput implements ValorInput {
     }
 
     /**
-     * One-shot helper if you want the "ActionResult" style loop.
-     * Not required by controllers, but safe to keep.
+     * Reads and applies a single hero turn command.
+     * Delegates movement and attack resolution to the provided helpers.
      */
     public ActionResult takeHeroTurn(Hero hero, ValorMovement movement, ValorCombat combat, List<Monster> laneMonsters) {
         String line = readLine("Enter command: ").trim().toUpperCase();
@@ -56,7 +69,11 @@ public class ConsoleValorInput implements ValorInput {
         }
     }
 
+    /**
+     * Handles target selection and performs a basic attack if possible.
+     */
     private boolean handleAttack(Hero hero, ValorCombat combat, List<Monster> laneMonsters) {
+        // Determine which monsters are valid attack targets for this hero
         List<Monster> inRange = combat.getMonstersInRange(hero);
         if (inRange.isEmpty()) {
             System.out.println("No monsters in attack range!");
@@ -65,8 +82,10 @@ public class ConsoleValorInput implements ValorInput {
 
         Monster target;
         if (inRange.size() == 1) {
+            // Single target case: no selection needed
             target = inRange.get(0);
         } else {
+            // Multiple targets: prompt the player to choose an index
             System.out.println("Monsters in range:");
             for (int i = 0; i < inRange.size(); i++) {
                 Monster m = inRange.get(i);
@@ -81,10 +100,10 @@ public class ConsoleValorInput implements ValorInput {
             }
         }
 
+        // Execute attack and remove monster from the lane list if defeated
         boolean killed = combat.heroAttack(hero, target);
         if (killed) laneMonsters.remove(target);
         return true;
     }
-
 
 }

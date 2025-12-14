@@ -1,6 +1,20 @@
+/**
+ * File: ValorEndScreenRenderer.java
+ * Package: legends.valor.ui
+ *
+ * Purpose:
+ *   Renders the Legends of Valor post-game end screen and loaded-save summaries.
+ *
+ * Responsibilities:
+ *   - Display leaderboard panels (top scores and recent matches)
+ *   - Present a match summary with aggregated totals across heroes
+ *   - Present per-hero performance statistics in a table format
+ *   - Show post-game options (save, load, continue) using ConsoleUI utilities
+ */
 package legends.valor.ui;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import legends.leaderboard.LeaderboardEntry;
@@ -12,15 +26,24 @@ import static legends.ui.ConsoleUI.*;
 
 public class ValorEndScreenRenderer {
 
-    public void renderEndScreen(GameRecord record, List<LeaderboardEntry> top10) {
+    /**
+     * Renders the full post-game end screen including leaderboards and match summaries.
+     */
+    public void renderEndScreen(GameRecord record, List<LeaderboardEntry> top3, List<LeaderboardEntry> recent5) {
+        // Clear any stray ANSI artifacts before printing boxed UI
         ConsoleUI.clearLineJunk();
 
-        renderLeaderboard(top10);
+        // Leaderboard panels provide quick comparisons across games
+        renderLeaderboard("LEADERBOARD (Top 3 by Score)", top3);
+        renderLeaderboard("RECENT MATCHES (Last 5)", recent5);
+
+        // Match summary and per-hero breakdown provide performance details
         renderMatchSummary(record);
         renderPerHeroStats(record);
 
+        // Final prompt section describes available post-game actions
         ConsoleUI.boxed("POST-GAME OPTIONS",
-                List.of(
+                Arrays.asList(
                         CYAN + "[S]" + RESET + " Save last match",
                         CYAN + "[L]" + RESET + " Load last saved",
                         CYAN + "[ENTER]" + RESET + " Continue"
@@ -28,14 +51,20 @@ public class ValorEndScreenRenderer {
         );
     }
 
+    /**
+     * Renders summary panels for a match loaded from disk.
+     */
     public void renderLoadedMatch(GameRecord loaded) {
-        ConsoleUI.boxed("LOADED LAST SAVE", List.of("Showing loaded match summary below:"));
+        ConsoleUI.boxed("LOADED LAST SAVE", Arrays.asList("Showing loaded match summary below:"));
         renderMatchSummary(loaded);
         renderPerHeroStats(loaded);
     }
 
-    private void renderLeaderboard(List<LeaderboardEntry> top10) {
-        List<String[]> rows = new ArrayList<>();
+    /**
+     * Renders a leaderboard table in a boxed UI section.
+     */
+    private void renderLeaderboard(String title, List<LeaderboardEntry> entries) {
+        List<String[]> rows = new ArrayList<String[]>();
         rows.add(new String[]{
                 BOLD + "Rank" + RESET,
                 BOLD + "Score" + RESET,
@@ -44,11 +73,11 @@ public class ValorEndScreenRenderer {
                 BOLD + "Summary" + RESET
         });
 
-        if (top10 == null || top10.isEmpty()) {
+        if (entries == null || entries.isEmpty()) {
             rows.add(new String[]{"-", "-", "-", "-", DIM + "No games recorded yet." + RESET});
         } else {
-            for (int i = 0; i < top10.size(); i++) {
-                LeaderboardEntry e = top10.get(i);
+            for (int i = 0; i < entries.size(); i++) {
+                LeaderboardEntry e = entries.get(i);
                 rows.add(new String[]{
                         String.valueOf(i + 1),
                         String.valueOf(e.score),
@@ -59,17 +88,21 @@ public class ValorEndScreenRenderer {
             }
         }
 
-        ConsoleUI.boxed("LEADERBOARD (Top 10)", ConsoleUI.table(rows));
+        ConsoleUI.boxed(title, ConsoleUI.table(rows));
     }
 
+    /**
+     * Renders overall match information and aggregated totals across all heroes.
+     */
     private void renderMatchSummary(GameRecord r) {
-        List<String[]> sumRows = new ArrayList<>();
+        List<String[]> sumRows = new ArrayList<String[]>();
         sumRows.add(new String[]{BOLD + "Mode" + RESET, String.valueOf(r.mode)});
         sumRows.add(new String[]{BOLD + "Result" + RESET, colorResult(r.result)});
         sumRows.add(new String[]{BOLD + "Rounds" + RESET, String.valueOf(r.roundsPlayed)});
         sumRows.add(new String[]{BOLD + "Start" + RESET, String.valueOf(r.startedAt)});
         sumRows.add(new String[]{BOLD + "End" + RESET, String.valueOf(r.endedAt)});
 
+        // Aggregate totals for quick performance overview
         int kills = 0, faints = 0, gold = 0, xp = 0;
         double dealt = 0, taken = 0;
         for (GameRecord.HeroRecord h : r.heroes) {
@@ -91,8 +124,11 @@ public class ValorEndScreenRenderer {
         ConsoleUI.boxed("MATCH SUMMARY", ConsoleUI.table(sumRows));
     }
 
+    /**
+     * Renders a per-hero performance table for the given match record.
+     */
     private void renderPerHeroStats(GameRecord record) {
-        List<String[]> heroRows = new ArrayList<>();
+        List<String[]> heroRows = new ArrayList<String[]>();
         heroRows.add(new String[]{
                 BOLD + "Hero" + RESET,
                 BOLD + "Lv" + RESET,
@@ -120,6 +156,9 @@ public class ValorEndScreenRenderer {
         ConsoleUI.boxed("PER-HERO STATS", ConsoleUI.table(heroRows));
     }
 
+    /**
+     * Applies a color style to the match result for end-screen display.
+     */
     private String colorResult(GameStats.GameResult r) {
         if (r == null) return "";
         switch (r) {
