@@ -1,5 +1,6 @@
 /**
  * Market.java
+ * 
  * Represents an in-game market that stores and organizes all purchasable items.
  * The market may be constructed either using:
  *   A direct constructor that receives four categorized lists.

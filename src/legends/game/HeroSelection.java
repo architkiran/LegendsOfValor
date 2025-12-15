@@ -10,13 +10,6 @@
  * - Enforcing minimum and maximum party size constraints
  * - Allowing the player to select heroes via a console-based menu
  * - Constructing and returning a Party object containing the chosen heroes
- *
- * OOP / Design Notes:
- * - Follows Single Responsibility Principle (SRP): focuses only on hero selection logic.
- * - Separates data loading (DataLoader) from user interaction and validation.
- * - Uses generics to apply shared initialization rules across different Hero subclasses.
- * - Avoids modifying hero subclasses directly; interacts only through the Hero abstraction.
- * - Designed to be reusable for different game modes by configuring party size bounds.
  */
 
 package legends.game;

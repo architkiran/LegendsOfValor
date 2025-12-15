@@ -8,13 +8,7 @@
  * - Displaying choice menus (monsters, spells, potions, weapons, armor)
  * - Reading and validating user input
  * - Returning the selected domain objects to the caller
- *
- * OOP / Design Notes:
- * - Follows Single Responsibility Principle (SRP): focuses only on input and selection.
- * - Decouples user interaction from battle mechanics (BattleActions) and game flow (BattleState).
- * - Uses composition (Scanner) rather than owning input creation, improving testability.
- * - Keeps domain logic out: this class never modifies heroes or monsters directly.
- */
+*/
 
 package legends.game.battle;
 

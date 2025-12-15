@@ -8,12 +8,6 @@
  * - The party's hero panel (HP/MP bars)
  * - The monsters panel (HP bars)
  * - The action menu for the currently acting hero
- *
- * OOP / Design Notes:
- * - Follows Single Responsibility Principle (SRP): this class only formats and prints UI output.
- * - Does not mutate game state or execute battle logic (keeps it a pure "view").
- * - Works with domain objects (Party, Hero, Monster) via their public APIs only.
- * - Uses small helper methods (pad/center/repeat) to isolate formatting details.
  */
 
 package legends.game.battle;

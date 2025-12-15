@@ -8,13 +8,6 @@
  * - Handling battle completion and state transition back to exploration
  * - Applying between-round regeneration
  * - Awarding post-battle rewards (XP, gold) and reviving fallen heroes
- *
- * OOP / Design Notes:
- * - Follows Single Responsibility Principle (SRP): focuses on battle *round* rules and outcomes,
- *   not on user input (BattleInput) or combat actions (BattleActions) or rendering (BattleView).
- * - Acts as a domain service: coordinates changes across multiple domain objects (Party, Hero, Monster)
- *   without owning them.
- * - Keeps BattleState thin by isolating end-of-battle flow and reward logic in one place.
  */
 
 package legends.game.battle;

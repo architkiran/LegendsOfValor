@@ -10,6 +10,7 @@
  *   - Detect win/loss conditions based on Nexus reach checks
  *   - Maintain home-lane bindings for recall/respawn behavior
  *   - Handle end-of-round cleanup and respawn of defeated heroes
+ *   - Track the current round number for UI views (status screen)
  */
 package legends.valor.turn;
 
@@ -54,6 +55,10 @@ public class ValorTurnManager {
     // UI logger used for end-of-round messages such as respawns
     private final ValorCombatLogView log = new ValorCombatLogView();
 
+    // Tracks how many rounds have been played (1-based for UI readability)
+    // NOTE: This is intentionally managed here so the round count remains consistent across controllers.
+    private int roundCounter = 0;
+
     public ValorTurnManager(ValorBoard board,
                             ValorMovement movement,
                             ValorCombat combat,
@@ -68,9 +73,18 @@ public class ValorTurnManager {
         this.party = party;
         this.laneMonsters = laneMonsters;
 
-        // Hero controller receives shared lane map for recall/teleport rules
+        // RoundProvider allows the HeroTurnController (and its UI) to query the current round number
+        // without needing direct access to this manager or its internal state.
+        HeroTurnController.RoundProvider roundProvider = new HeroTurnController.RoundProvider() {
+            @Override
+            public int currentRound() {
+                return roundCounter;
+            }
+        };
+
+        // Hero controller receives shared lane map for recall/teleport rules + round provider for status UI
         this.heroTurnController = new HeroTurnController(
-                board, movement, combat, laneMonsters, input, homeLane, market, scanner
+                board, movement, combat, laneMonsters, input, homeLane, market, scanner, roundProvider
         );
 
         // Monster controller uses combat for attacks and AI for advancement
@@ -84,6 +98,9 @@ public class ValorTurnManager {
      * @return Outcome if the match ends this round, or null if play should continue
      */
     public ValorMatch.Outcome playOneRound() {
+        // Increment at the start so UIs can display "Round 1" on the first round.
+        roundCounter++; // advance round number at the start of each round
+
         if (party == null) return ValorMatch.Outcome.QUIT;
 
         List<Hero> heroes = party.getHeroes();
