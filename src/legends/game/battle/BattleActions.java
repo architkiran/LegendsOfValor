@@ -8,11 +8,6 @@
  * - Monster turn execution (select target, dodge check, apply damage)
  * - Spell side-effects (type-based debuffs)
  *
- * OOP / Design Notes:
- * - Follows Single Responsibility Principle (SRP): this class performs *combat logic only*.
- * - Separates concerns from rendering (BattleView) and user selection/menus (BattleInput).
- * - Uses composition: delegates selection logic to BattleInput rather than mixing UI/input here.
- * - Keeps BattleState thin: BattleState orchestrates turn flow, while this class executes actions.
  */
 
 package legends.game.battle;

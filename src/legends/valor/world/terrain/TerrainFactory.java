@@ -2,20 +2,24 @@ package legends.valor.world.terrain;
 
 import legends.valor.world.ValorCellType;
 
+/**
+ * Class: TerrainFactory.java
+ * Package: legends.valor.world.terrain
+ * Purpose:
+ * Creates Terrain instances for terrain-enabled board cells.
+ */
 public class TerrainFactory {
 
     private TerrainFactory() {
-        // prevent instantiation
+        // utility class
     }
 
     /**
-     * Creates a Terrain instance only for bonus-bearing cell types.
-     * Returns null for all other cell types.
+     * Returns a Terrain instance for bonus terrain cell types.
+     * Returns null for non-terrain cells.
      */
     public static Terrain create(ValorCellType type) {
-        if (type == null) {
-            return null;
-        }
+        if (type == null) return null;
 
         switch (type) {
             case BUSH:
@@ -25,7 +29,7 @@ public class TerrainFactory {
             case KOULOU:
                 return new KoulouTerrain();
             default:
-                return null; // Plain, Inaccessible, Obstacle, Nexus
+                return null;
         }
     }
 }

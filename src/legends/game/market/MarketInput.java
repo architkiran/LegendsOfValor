@@ -1,10 +1,17 @@
 /**
- * MarketInput handles all console-based input interactions related to the market.
+ * File: MarketInput.java
+ * Package: legends.game.market
  *
- * This class is responsible only for reading and validating user input
- * (strings, integers, and hero selection) and deliberately contains no
- * business logic. It supports the separation of concerns by keeping
- * input parsing independent from market rules and UI rendering.
+ * Purpose:
+ *   Handles all user input related to market interactions.
+ *
+ * Responsibilities:
+ *   - Read and normalize console input
+ *   - Parse numeric input with cancellation support
+ *   - Validate hero selection for market transactions
+ *   - Prevent invalid or out-of-range user selections
+ *   - Provide clean, validated input to market controllers
+ *   - Maintain separation between input handling and market logic
  */
 package legends.game.market;
 
@@ -16,22 +23,21 @@ import java.util.Scanner;
 
 public class MarketInput {
 
-    // Shared scanner used for all market-related input
+    // Shared scanner for reading market-related input
     private final Scanner in;
 
     /**
-     * Constructs a MarketInput wrapper around an existing Scanner.
-     * The scanner lifecycle is managed externally.
+     * Creates a MarketInput using an externally managed Scanner.
+     *
+     * @param in shared Scanner for console input
      */
     public MarketInput(Scanner in) {
         this.in = in;
     }
 
     /**
-     * Reads a full line from input, trims whitespace,
-     * and normalizes it to uppercase.
-     *
-     * This ensures consistent command handling regardless of user casing.
+     * Reads a line of input and normalizes it
+     * for consistent command handling.
      */
     public String readUpperTrimmedLine() {
         return in.nextLine().trim().toUpperCase();
@@ -39,10 +45,7 @@ public class MarketInput {
 
     /**
      * Reads an integer from input.
-     *
-     * If parsing fails, this method prints an error message and
-     * returns 0, which is treated by callers as a cancellation.
-     * This preserves the original market interaction behavior.
+     * Returns 0 if parsing fails, treated as cancellation.
      */
     public int readIntOrCancel() {
         String line = in.nextLine().trim();
@@ -57,16 +60,9 @@ public class MarketInput {
     }
 
     /**
-     * Prompts the user to choose a hero from the given party
-     * for a buy or sell transaction.
+     * Prompts the user to select a hero for a market transaction.
      *
-     * This method delegates all display logic to MarketView
-     * and performs only input validation and selection.
-     *
-     * @param party the party containing available heroes
-     * @param verb  the action being performed (e.g., "buy", "sell")
-     * @param view  the view responsible for rendering hero options
-     * @return the selected Hero, or null if the action is cancelled or invalid
+     * @return selected Hero, or null if cancelled or invalid
      */
     public Hero chooseHeroForTransaction(Party party, String verb, MarketView view) {
         List<Hero> heroes = party.getHeroes();

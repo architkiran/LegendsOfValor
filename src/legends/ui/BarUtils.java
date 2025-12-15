@@ -2,17 +2,10 @@
  * BarUtils.java
  * Utility class for creating visual HP/MP style bars.
  * 
- * <p>This class provides a helper method for rendering
+ * This class provides a helper method for rendering
  * progress bars using Unicode block characters. It is used
  * throughout the battle UI for displaying hero and monster
  * health and mana in a clear and consistent visual format.</p>
- *
- * <p>The bar is composed of:
- * <ul>
- *     <li>Green filled blocks representing the current amount</li>
- *     <li>Light empty blocks representing the missing amount</li>
- * </ul>
- * The total width of the bar is configurable.</p>
  */
 
 package legends.ui;

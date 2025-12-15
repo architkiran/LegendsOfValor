@@ -10,12 +10,6 @@
  * - Delegating user selection/menus to BattleInput
  * - Delegating combat mechanics to BattleActions
  * - Delegating end-of-battle rules and rewards to BattleRoundService
- *
- * OOP / Design Notes:
- * - Implements the State pattern via GameState: the game swaps into BattleState during combat.
- * - Keeps orchestration logic here while delegating details to focused helper classes (SRP).
- * - Uses composition to build the battle subsystem out of collaborating objects.
- * - Minimizes coupling: BattleState does not directly implement damage, debuffs, or inventory menus.
  */
 
 package legends.game;

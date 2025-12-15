@@ -1,4 +1,6 @@
-/**
+/*
+ * Colors.java:
+ *
  * Utility class containing ANSI color codes used throughout the game.
  * <p>
  * These constants allow the game to print colored or styled text in the console.

@@ -14,7 +14,6 @@
 package legends.valor.turn;
 
 import legends.characters.Hero;
-import legends.valor.world.ValorBoard;
 
 public class HeroTurnMenuView {
 
@@ -61,7 +60,8 @@ public class HeroTurnMenuView {
         System.out.println(CYAN + "┃ " + RESET + formatKey("C", "Cast Spell") + " " + formatKey("P", "Use Potion") + padRight("", 16) + CYAN + "┃" + RESET);
         System.out.println(CYAN + "┃ " + RESET + formatKey("E", "Equip") + "     " + formatKey("T", "Teleport") + padRight("", 19) + CYAN + "┃" + RESET);
         System.out.println(CYAN + "┃ " + RESET + formatKey("R", "Recall") + "    " + formatKey("O", "Remove Obstacle") + padRight("", 12) + CYAN + "┃" + RESET);
-        System.out.println(CYAN + "┃ " + RESET + formatKey("M", "Market") + "    " + GREEN + RESET + padRight("", 6) + padRight("", 25) + CYAN + "┃" + RESET);
+        System.out.println(CYAN + "┃ " + RESET + formatKey("M", "Market") + "    " + formatKey("I", "Inventory") + padRight("", 18) + CYAN + "┃" + RESET);
+        System.out.println(CYAN + "┃ " + RESET + formatKey("Z", "Status") + "    " + GREEN + RESET + padRight("", 6) + padRight("", 25) + CYAN + "┃" + RESET);
         System.out.println(CYAN + "┃ " + RESET + formatKey("N", "Wait") + "      " + formatKey("Q", "Quit") + padRight("", 23) + CYAN + "┃" + RESET);
 
         System.out.println(CYAN + BOLD + "┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛" + RESET);
