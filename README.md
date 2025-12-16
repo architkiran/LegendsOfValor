@@ -534,18 +534,23 @@ Enter command: W
 
 - State Pattern <br>
 	- GameState interface + concrete ExplorationState, BattleState, InventoryState, MarketState, HeroSelection. <br>
-	- LegendsGame holds a GameState reference and delegates render, handleInput, and update. <br>
+	- LegendsGame & ValorGame hold a GameState reference and delegate render, handleInput, and update. <br>
 	- Makes it easy to add more states (e.g., PauseState, SettingsState) without touching existing ones.
 
-- Factory / Factory Method<br>
-	- MonsterFactory.generateMonstersForParty(...) encapsulates logic to create an appropriate set of monsters based on the party.<br>
+- Factory Pattern/ Factory Method<br>
+	- MonsterFactory, HeroParty, TerrainFactory encapsulate logic to create an appropriate set of monsters/heroes/terrains based on the party.<br>
 	- MapGenerator.generate(size) centralizes world creation and randomness.<br>
 	- DataLoader acts as a factory for heroes, items, and monsters from text files.
 
-- Strategy-like Behavior via Interfaces / Composition<br>
-	- Item is an interface; different item types (Weapon, Armor, Potion, Spell) implement their own behavior but can be handled polymorphically.
+- Strategy Pattern<br>
+	- Monster behavior (advance, attack decisions, movement direction) is encapsulated inside ValorMonsterAI. <br>
+  - In MonsterTurnController, the turn controller does not hardcode monster logic; it delegates decisions to the AI strategy. <br>
+  - Allows monster behavior to be changed or extended without modifying turn logic, and makes it easy to add new AI strategies (e.g., aggressive, defensive, random).
 
-	- SpellType and PotionAttribute enums combined with logic in BattleState and Hero allow flexible behavior per type without large if/else chains scattered across the codebase.
+- Facade Pattern<br>
+  - Used in HeroActionService, where the subsystems HeroCombatActions, HeroMovementActions etc, are hidden behind a facade.<br>
+  - HeroTurnController interacts with one class (HeroActionService) instead of many low-level action classes, which delegates work to the appropriate specialized action class.<br>
+  - Reduces coupling between the turn controller and action implementations, and simplifies hero turn logic.
 
 - Encapsulation & Information Hiding<br>
 	- Each package hides its implementation details; other packages only use public APIs (Party, Market, WorldMap, etc.), making future changes safer.
