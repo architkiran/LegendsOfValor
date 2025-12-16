@@ -49,7 +49,7 @@ public class ValorCombat {
     // Range model: current tile + 4-neighborhood (orthogonal adjacency)
     private static final int[][] NEIGHBOR_OFFSETS = {
             {-1, -1}, {-1, 0}, {-1, 1},
-            { 0, -1},          { 0, 1},
+            { 0, -1}, {0, 0}, { 0, 1},
             { 1, -1}, { 1, 0}, { 1, 1}
     };
 

@@ -98,47 +98,37 @@ public class ValorTurnManager {
      * @return Outcome if the match ends this round, or null if play should continue
      */
     public ValorMatch.Outcome playOneRound() {
-        // Increment at the start so UIs can display "Round 1" on the first round.
-        roundCounter++; // advance round number at the start of each round
+        roundCounter++;
 
         if (party == null) return ValorMatch.Outcome.QUIT;
-
         List<Hero> heroes = party.getHeroes();
         if (heroes == null || heroes.isEmpty()) return ValorMatch.Outcome.QUIT;
 
-        // Hero phase: each living hero takes one action
         for (int i = 0; i < heroes.size(); i++) {
             Hero h = heroes.get(i);
             if (h == null) continue;
-
-            bindHomeLaneIfMissing(h);
 
             if (h.getHP() <= 0) continue;
 
             boolean ok = heroTurnController.handleHeroTurn(h, i + 1);
             if (!ok) return ValorMatch.Outcome.QUIT;
 
-            // Check hero victory after each hero action
             if (board != null && board.heroesReachedEnemyNexus()) {
                 flushAllLogs();
                 return ValorMatch.Outcome.HERO_WIN;
             }
         }
 
-        // Monster phase: monsters either attack or advance
         monsterTurnController.monstersPhase(laneMonsters);
 
-        // Check monster victory after the monster phase completes
         if (board != null && board.monstersReachedHeroesNexus()) {
             flushAllLogs();
             return ValorMatch.Outcome.MONSTER_WIN;
         }
 
-        // End-of-round housekeeping includes log flushing and hero respawn
         flushAllLogs();
         respawnDeadHeroes(heroes);
         flushAllLogs();
-
         return null;
     }
 
@@ -153,21 +143,6 @@ public class ValorTurnManager {
         try {
             if (log != null) log.flush();
         } catch (Exception ignored) {}
-    }
-
-    /**
-     * Records a hero's home lane based on current position if not already bound.
-     */
-    private void bindHomeLaneIfMissing(Hero h) {
-        if (h == null) return;
-        if (homeLane.containsKey(h)) return;
-        if (movement == null || board == null) return;
-
-        int[] pos = movement.findHero(h);
-        if (pos == null || pos.length < 2) return;
-
-        int lane = board.getLane(pos[1]);
-        if (lane >= 0) homeLane.put(h, Integer.valueOf(lane));
     }
 
     /**
