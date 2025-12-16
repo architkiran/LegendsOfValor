@@ -624,7 +624,7 @@ Enter command: W
   Inaccessible tiles, market tiles, and common tiles each appear with configurable probabilities.
 
 - **Party-Based Gameplay**  
-  Choose **1–3 heroes** from:
+  Choose **3 heroes** from:
   - Warriors  
   - Paladins  
   - Sorcerers  
