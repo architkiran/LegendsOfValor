@@ -1,7 +1,10 @@
 # Legends of Valor
 
-A console-based, turn-based RPG built in Java using object-oriented design and classic design patterns.
-You explore a randomly generated world, assemble a party of heroes, visit markets, and battle monsters in a tactical, turn-based combat system.
+This project is a console-based, turn-based RPG built in Java using object-oriented design and classic design patterns. Players can choose to play two game modes, each offering a distinct strategic experience.
+
+- **Legends: Monsters and Heroes** – Explore a world, assemble a party of heroes, visit markets, and engage in turn-based battles against monsters using items, spells, and strategic combat decisions.
+
+- **Legends of Valor** – Lead a team of heroes in a lane-based, grid-style battlefield where terrain bonuses, coordinated hero actions, and tactical positioning are key to stopping waves of monsters and destroying the enemy Nexus before your own is overrun.
 
 ---
 
@@ -14,7 +17,11 @@ Project is organized into the following top-level packages:
 - `legends.items` – Items (weapons, armor, potions, spells) and their shared interface.
 - `legends.market` – Market implementation for buying / selling items.
 - `legends.world` – World map, tiles, positions, and map generation.
+- `legends.valor` - Core game loop for Legends of Valor.
+- `legends.stats` - Game stats and hero stats.
 - `legends.ui` – Console UI helpers (colors, bars).
+- `legends.leaderboard ` - Tracking, ranking and displaying leaderboard across game runs.
+- `legends.persistence ` - Game save and load functionality to restore game state across sessions.
 - `legends.data` – Data loading and factories for heroes, monsters, and items (from text files).
 
 ### Key Classes (by package)
@@ -22,10 +29,17 @@ Project is organized into the following top-level packages:
 #### `legends.game`
 
 - **`Main`**  
-  Entry point. Creates a `LegendsGame` instance and calls `run()`.
+  Entry point. Creates a `LegendsApp` instance and calls `run()`.
+
+- **`LegendsApp`**
+  Serves as the main entry point for the Legends application: holds `Game`.
+  - Displays the top-level game selection menu.
+  - Accepts and validates user input for game choice.
+  - Launches the selected game mode.
+  - Manages application-level control flow and exit behavior.
 
 - **`LegendsGame`**  
-  Orchestrates the whole game: holds the current `GameState`, the `WorldMap`, `Party`, and `Market`.  
+  Orchestrates the whole game for Legends: Heroes & Monsters: holds the current `GameState`, the `WorldMap`, `Party`, and `Market`.  
   - Initializes map (`MapGenerator`), market (`Market`), and data (`DataLoader`).  
   - Runs the main game loop (`gameLoop`) which repeatedly calls `render`, reads input, `handleInput`, and `update` on the current state.  
   - Shows the intro screen and triggers hero selection before entering exploration.
@@ -72,6 +86,114 @@ Project is organized into the following top-level packages:
   - Prints grouped hero list with stats and ANSI colors.
   - Allows the player to choose between 1 and 3 heroes.
   - Returns a fully constructed `Party`.
+
+#### `legends.valor`  *(only high-level summary here)*
+
+- **`valor.combat - ValorCombat`** 
+Implements core combat mechanics for Legends of Valor encounters. Initializes `ValorBoard` and `GameStats`.
+- Determine valid targets within attack/cast range on the Valor board
+- Execute hero and monster combat actions (attacks and spell casts)
+- Apply damage, dodges, and spell debuffs using game rules
+- Update per-hero statistics and emit combat log output
+
+- **`valor.game - ValorGame`**
+Acts as the entry point for the Legends of Valor game mode.
+- Starts and runs a Valor match session
+- Handles quit and replay flow for the game mode via `askPlayAgain`
+- Delegates post-game processing to the post-game controller via `ValorPostGameController`
+- Integrates persistence(`SaveManager`) and leaderboard services (`LeaderboardService`) for end-of-game actions
+
+- **`valor.game - ValorIntroScreen`**
+Displays the introductory instructions and rules for Legends of Valor.
+
+- **`valor.game - ValorLaneSelector`**
+Collects user input to assign each of the three heroes to a Valor lane.
+
+- **`valor.game - ValorLaneState`**
+ Implements the interactive lane gameplay state for Legends of Valor.
+
+- **`valor.game - ValorMarketController`**
+Controls market interactions during Legends of Valor gameplay.
+
+- **`valor.game - ValorMatch`**
+Orchestrates a full Legends of Valor match from setup through repeated rounds.
+
+- **`valor.game - ValorMatchSetup`**
+Builds and initializes all components required to start a Legends of Valor match.
+
+- **`valor.game - ValorMonsterAI`**
+Determines movement decisions for monsters during Legends of Valor gameplay.
+
+- **`valor.game - ValorPostGameController`**
+Manages end-of-match flow for Legends of Valor after a match concludes.
+
+- **`valor.game - ValorSpawner`**
+Handles initial placement and spawning of heroes and monsters on the Valor board.
+
+- **`valor.game - ValorState`**
+Defines a common interface for Legends of Valor gameplay states.
+
+
+- **`valor.turn - ConsoleValorInput`**
+Provides console-based input handling for Legends of Valor turn actions.
+
+- **`valor.turn - HeroActionService`**
+Provides a unified facade for hero actions during Legends of Valor turns.
+
+- **`valor.turn - HeroCombatActions`**
+Encapsulates all hero combat-related actions in Legends of Valor.
+
+- **`valor.turn - HeroEquipmentActions`**
+Encapsulates equipment, inventory usage, and market access actions for Valor heroes.
+
+- **`valor.turn - HeroMovementActions`**
+Encapsulates hero movement and board-rule actions for Legends of Valor turns.
+
+- **`valor.turn - HeroTurnController`**
+Controls the interactive turn flow for a single hero in Legends of Valor.
+
+- **`valor.turn - HeroTurnMenuView`**
+Renders the hero turn menu UI for Legends of Valor in the console.
+
+- **`valor.turn - HeroTurnUIHelper`**
+Provides reusable console-selection prompts for Legends of Valor hero turn actions.
+
+- **`valor.turn - MonsterTurnController`**
+Controls the monster phase of a Legends of Valor round.
+
+- **`valor.turn - ValorInput`**
+Abstraction over player input for Legends of Valor to decouple game logic from direct console I/O.
+
+- **`valor.turn - ValorTurnManager`**
+Coordinates turn execution for a Legends of Valor round.
+
+- **`valor.ui - ValorCombatLogView`**
+Renders formatted combat log messages for Legends of Valor encounters.
+
+- **`valor.ui - ValorEndScreenRendering`**
+Renders the Legends of Valor post-game end screen and loaded-save summaries.
+
+- **`valor.ui - ValorRoundStatusView`**
+Displays a per-round status snapshot of the Valor board.
+
+- **`valor.world.terrain package`**
+Creates terain instances via `TerrainFactory` for all the terrain-enabled board cells (`terrain.BushTerrain`, `terrain.CaveTerrain`, `terrain.KoulouTerrain`)
+
+- **`valor.world - ValorBoard`**
+Represents the 8x8 game board for Legends of Valor.
+ * Handles board generation, lane structure, terrain placement,hero/monster positioning, movement validation, rendering,and win-condition checks.
+
+- **`valor.world - ValorCellType`**
+Enumerates all possible cell types (nexus, plain, inaccessible etc) on the Legends of Valor board. Each type defines its display symbol and basic accessibility rules.
+
+- **`valor.world - ValorDirection`**
+Represents the four cardinal movement directions used on the board. Each direction defines how it changes a unit’s row and column position.
+
+- **`valor.world - ValorMovement`**
+Applies movement rules for heroes and monsters on a `ValorBoard`. Handles standard movement, teleport placement checks, terrain enter/exit hooks, and lane-based "no bypass" constraints.
+
+- **`valor.world - ValorTile`**
+Represents a single cell on the board. A tile has a fixed cell type, optional terrain behavior, and may contain at most one Hero and one Monster.
 
 #### `legends.characters`  *(only high-level summary here)*
 
@@ -164,6 +286,9 @@ Project is organized into the following top-level packages:
 - **`Colors`**  
   Centralized ANSI color constants (foregrounds, some backgrounds, bold, underline).
 
+- **`ConsoleUI `**
+  Centralized ANSI color codes and text styling with utilities for boxed sections, aligned tables, ANSI-safe padding/centering, and consistent console output formatting.
+
 #### `legends.data`  *(high-level)*
 
 - **`DataLoader`**  
@@ -193,39 +318,60 @@ Assuming your project root is the directory that contains the `legends/` folder 
 
 ```
 ══════════════════════════════════════════════
-           🏰  LEGENDS OF VALOR  🗡️
+          WELCOME TO MONSTERS & HEROES
 ══════════════════════════════════════════════
 
-Welcome, traveler!
-Your journey begins in a world filled with danger,
-magic, and legendary monsters. Build a powerful team
-of heroes and guide them to victory.
+Choose which adventure you want to play:
 
-HOW TO PLAY THE GAME:
- • Explore the World: Move across the map to find markets and battles.
- • P is the Party's current position on the map.
- • Explore: Use W / A / S / D keys to move.
- • Assemble Your Party: Choose 1–3 heroes to form your team.
- • Visit Markets: Buy weapons, armor, spells, and potions.
- • Manage your items by opening the inventory with 'I'.
- • Battles: Fight monsters using strategy!
-       - Heroes act in turn
-       - Monsters act after all heroes
-       - Manage spells, potions, and equipment wisely
+  [1] Legends: Monsters & Heroes
+      Classic exploration with random battles,
+      markets, and turn-based combat.
 
- • After each battle:
-       - Heroes heal 10% HP/MP per round
-       - Fainted heroes revive at 50% HP/MP
-       - Heroes earn XP & gold to grow stronger
+  [2] Legends of Valor
+      3-lane tactical battle for control of the Nexuses.
 
-TIP:
- • Press 'I' during exploration to open inventory.
- • Press 'Q' in battle to flee.
- • Safe tiles reduce chance of encounters.
+  [Q] Quit
 
-Press ENTER when you're ready to begin...
+Enter your choice (1 / 2 / Q): 2
 
-Welcome to Legends of Valor!
+Launching Legends of Valor...
+
+
+════════════════════════ LEGENDS OF VALOR ════════════════════════
+
+Welcome to Legends of Valor, a 3-lane tactical battle between
+your party of Heroes and waves of Monsters.
+
+Goal
+ - Enter the enemy (top) Nexus to win.
+ - If any Monster reaches your (bottom) Nexus, you lose.
+
+Team Setup
+ - You must select exactly 3 Heroes (one per lane).
+
+Terrain Bonuses (Heroes only)
+ - Bush   → +10% Dexterity
+ - Cave   → +10% Agility
+ - Koulou → +10% Strength
+
+Turn Order
+ - Each round:
+     1) Hero 1 acts, Hero 2 acts, Hero 3 acts
+     2) Monster 1 acts, Monster 2 acts, Monster 3 acts
+
+Attack Range
+ - Same tile OR one tile N/S/E/W from attacker.
+
+Controls
+ - W/A/S/D = move
+ - F = basic attack
+ - N = wait/skip
+ - Q = quit to menu
+
+Press ENTER to begin...
+
+
+Now choose your heroes for Legends of Valor...
 
 =================================================
             🧙 HERO SELECTION 🛡️
@@ -263,131 +409,125 @@ No   Name                 Lvl  HP     MP     STR    DEX    AGI
 18   Skye_Soar            1    100    50     700    500    400   
 
 
-You may choose between 1 and 3 heroes.
+You must choose exactly 3 heroes.
+
 Select by number, or 0 to finish.
 
-Select hero 1 of 3 (0 = done): 1
-✔ Added Gaerdal_Ironhand
-Select hero 2 of 3 (0 = done): 9
-✔ Added Skoraeus_Stonebones
-Select hero 3 of 3 (0 = done): 15
-✔ Added Reign_Havoc
+Select hero 1 of 3 (0 = done): 4
+✔ Added Flandal_Steelskin
+Select hero 2 of 3 (0 = done): 11
+✔ Added Amaryllis_Astra
+Select hero 3 of 3 (0 = done): 14
+✔ Added Segojan_Earthcaller
 
 You have reached the maximum (3).
 
 =============== YOUR PARTY ===============
- → Gaerdal_Ironhand (Level 1)
+ → Flandal_Steelskin (Level 1)
     HP: 100 / 100
     MP: 50 / 50
-    STR: 700   DEX: 600   AGI: 500   Gold: 1354
+    STR: 750   DEX: 700   AGI: 650   Gold: 2500
 
- → Skoraeus_Stonebones (Level 1)
+ → Amaryllis_Astra (Level 1)
     HP: 100 / 100
     MP: 50 / 50
-    STR: 650   DEX: 350   AGI: 600   Gold: 2500
+    STR: 500   DEX: 500   AGI: 500   Gold: 2500
 
- → Reign_Havoc (Level 1)
+ → Segojan_Earthcaller (Level 1)
     HP: 100 / 100
     MP: 50 / 50
-    STR: 800   DEX: 800   AGI: 800   Gold: 2500
+    STR: 800   DEX: 650   AGI: 500   Gold: 2500
 
 ===========================================
 
 
-=== WORLD MAP ===
-┏━━━┳━━━┳━━━┳━━━┳━━━┳━━━┳━━━┳━━━┓
-┃ P ┃ · ┃ M ┃ · ┃ M ┃ · ┃ · ┃ · ┃
-┣━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━┫
-┃ · ┃ · ┃ M ┃ M ┃ · ┃ · ┃ · ┃ M ┃
-┣━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━┫
-┃ M ┃ · ┃ M ┃ M ┃ · ┃ · ┃ · ┃ · ┃
-┣━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━┫
-┃ X ┃ M ┃ M ┃ · ┃ · ┃ · ┃ M ┃ M ┃
-┣━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━┫
-┃ X ┃ · ┃ · ┃ X ┃ · ┃ M ┃ · ┃ M ┃
-┣━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━┫
-┃ · ┃ · ┃ · ┃ · ┃ M ┃ · ┃ M ┃ · ┃
-┣━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━┫
-┃ · ┃ M ┃ · ┃ · ┃ · ┃ X ┃ · ┃ · ┃
-┣━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━┫
-┃ X ┃ · ┃ M ┃ X ┃ · ┃ · ┃ M ┃ M ┃
-┗━━━┻━━━┻━━━┻━━━┻━━━┻━━━┻━━━┻━━━┛
-Controls: W/A/S/D to move, 'I' to open Inventory, 'Q' to quit
+==============================================================
+                    === LANE SELECTION ===
+==============================================================
+Assign each hero to a lane:
+  0 = TOP (cols 0–1)    1 = MID (cols 3–4)    2 = BOT (cols 6–7)
+--------------------------------------------------------------
+Choose lane for Flandal_Steelskin (0/1/2): 2
+✔ Flandal_Steelskin -> BOT (6-7)
+Choose lane for Amaryllis_Astra (0/1/2): 0
+✔ Amaryllis_Astra -> TOP (0-1)
+Choose lane for Segojan_Earthcaller (0/1/2): 1
+✔ Segojan_Earthcaller -> MID (3-4)
+--------------------------------------------------------------
+Lane assignment complete.
 
-╔════════════════════════════════════════════════════════════════════════╗
-║                                 MARKET                                 ║
-╠════════════════════════════════════════════════════════════════════════╣
-║  1. Buy Items                                                          ║
-║  2. Sell Items                                                         ║
-║  B. Back to Map                                                        ║
-╚════════════════════════════════════════════════════════════════════════╝
+┌────┬──────────────────────┬────────┬──────────┐
+│ #  │ Hero                 │ Lane   │ Columns  │
+├────┼──────────────────────┼────────┼──────────┤
+│ 1  │ Segojan_Earthcaller  │ MID    │ (3-4)    │
+│ 2  │ Amaryllis_Astra      │ TOP    │ (0-1)    │
+│ 3  │ Flandal_Steelskin    │ BOT    │ (6-7)    │
+└────┴──────────────────────┴────────┴──────────┘
 
-╔════════════════════════════════════════════════════════════╗
-║                       INVENTORY MENU                       ║
-╠════════════════════════════════════════════════════════════╣
-║ 1. Gaerdal_Ironhand  Lvl:1    HP:100    Gold:1354          ║
-║ 2. Skoraeus_Stonebones  Lvl:1    HP:100    Gold:2500       ║
-║ 3. Reign_Havoc      Lvl:1    HP:100    Gold:2500           ║
-║ B. Back to Map                                             ║
-╚════════════════════════════════════════════════════════════╝
+✔ Flandal_Steelskin spawned in BOT lane (cols 6–7) at (7,6)
+✔ Amaryllis_Astra spawned in TOP lane (cols 0–1) at (7,0)
+✔ Segojan_Earthcaller spawned in MID lane (cols 3–4) at (7,3)
+✔ Casper spawned in TOP lane (cols 0–1) at (0,1)
+✔ Blinky spawned in MID lane (cols 3–4) at (0,4)
+✔ Casper spawned in BOT lane (cols 6–7) at (0,7)
 
-A wild group of monsters appears!
+======================================================================================
+                                    ROUND 1 STATUS                                    
+======================================================================================
 
-Press ENTER to begin the battle
-Press Q to flee back to safety
+HEROES ON BOARD (3)
+--------------------------------------------------------------------------------------
+Name                 Lv   Pos       HP           MP         Lane  
+--------------------------------------------------------------------------------------
+Amaryllis_Astra      L1   (7,0)     100/100      50/50      TOP   
+Segojan_Earthcaller  L1   (7,3)     100/100      50/50      MID   
+Flandal_Steelskin    L1   (7,6)     100/100      50/50      BOT   
 
---- NEW ROUND ---
+MONSTERS ON BOARD (3)
+--------------------------------------------------------------------------------------
+Name                 Lv   Pos       HP         Lane  
+--------------------------------------------------------------------------------------
+Casper               L1   (0,1)     100        TOP   
+Blinky               L1   (0,4)     100        MID   
+Casper               L1   (0,7)     100        BOT   
+======================================================================================
 
-████████████████ 🛡️  BATTLE  🗡️ ████████████████
+===  LEGENDS OF VALOR MAP  ===
 
-╔════════════════════════════════════════════════════╗
-║                       HEROES                       ║
-╠════════════════════════════════════════════════════╣
-║ Gaerdal_Ironhand                                   ║
-║ HP: ████████████ (100/100)                         ║
-║                                                    ║
-║ MP: ████████████ (50/50)                           ║
-║                                                    ║
-║ Skoraeus_Stonebones                                ║
-║ HP: ████████████ (100/100)                         ║
-║                                                    ║
-║ MP: ████████████ (50/50)                           ║
-║                                                    ║
-║ Reign_Havoc                                        ║
-║ HP: ████████████ (100/100)                         ║
-║                                                    ║
-║ MP: ████████████ (50/50)                           ║
-║                                                    ║
-╚════════════════════════════════════════════════════╝
+  ┏━━━┳━━━┳━━━┳━━━┳━━━┳━━━┳━━━┳━━━┓
+  ┃ N ┃ M ┃ X ┃ N ┃ M ┃ X ┃ N ┃ M ┃
+  ┣━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━┫
+  ┃ . ┃ O ┃ X ┃ K ┃ B ┃ X ┃ K ┃ K ┃
+  ┣━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━┫
+  ┃ B ┃ B ┃ X ┃ . ┃ C ┃ X ┃ . ┃ K ┃
+  ┣━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━┫
+  ┃ C ┃ . ┃ X ┃ K ┃ C ┃ X ┃ C ┃ O ┃
+  ┣━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━┫
+  ┃ K ┃ C ┃ X ┃ K ┃ B ┃ X ┃ C ┃ B ┃
+  ┣━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━┫
+  ┃ . ┃ C ┃ X ┃ B ┃ C ┃ X ┃ C ┃ K ┃
+  ┣━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━┫
+  ┃ B ┃ C ┃ X ┃ B ┃ . ┃ X ┃ B ┃ C ┃
+  ┣━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━╋━━━┫
+  ┃ H ┃ N ┃ X ┃ H ┃ N ┃ X ┃ H ┃ N ┃
+  ┗━━━┻━━━┻━━━┻━━━┻━━━┻━━━┻━━━┻━━━┛
 
-╔════════════════════════════════════════════════════╗
-║                      MONSTERS                      ║
-╠════════════════════════════════════════════════════╣
-║ Casper                                             ║
-║ HP: ████████████ (100/100)                         ║
-║                                                    ║
-║ Blinky                                             ║
-║ HP: ████████████ (100/100)                         ║
-║                                                    ║
-║ BigBad-Wolf                                        ║
-║ HP: ████████████ (100/100)                         ║
-║                                                    ║
-╚════════════════════════════════════════════════════╝
-
-╔════════════════════════════════════════════════════╗
-║                      ACTIONS                       ║
-╠════════════════════════════════════════════════════╣
-║ Turn: Gaerdal_Ironhand                             ║
-╠────────────────────────────────────────────────────╣
-║ 1. Attack                                          ║
-║ 2. Cast Spell                                      ║
-║ 3. Use Potion                                      ║
-║ 4. Change Equipment                                ║
-║ 5. Show Party Stats                                ║
-║ Q. Flee                                            ║
-╚════════════════════════════════════════════════════╝
-
-Choose action for Gaerdal_Ironhand:
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                 HERO 1 TURN                  ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃ Flandal_Steelskin  (7,6)  BOT LANE           ┃
+┃ Lv 1 | HP 100/100 | MP 50/50 | Gold 2500     ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃ [W/A/S/D] Move   [F] Attack                  ┃
+┃ [C] Cast Spell [P] Use Potion                ┃
+┃ [E] Equip     [T] Teleport                   ┃
+┃ [R] Recall    [O] Remove Obstacle            ┃
+┃ [M] Market    [I] Inventory                  ┃
+┃ [Z] Status                                   ┃
+┃ [N] Wait      [Q] Quit                       ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+Enter command: W
+[Terrain Bonus] Flandal_Steelskin entered Bush: Dexterity +70.00 (700.00 → 770.00)
 ```
 
 # Design Patterns Used
@@ -431,8 +571,6 @@ Choose action for Gaerdal_Ironhand:
 	-	WorldMap.print and BarUtils centralize UI formatting, so UI style changes don’t require touching game logic.
 
 <br>
-
-
 
 
 # Implementation Qualities
@@ -517,346 +655,3 @@ Choose action for Gaerdal_Ironhand:
 <br>
 
 ---
-
-## DESIGN.md – UML Overview
-
-Here’s a UML-style overview you can put into a separate `DESIGN.md`. I’ll also include a PlantUML snippet you can feed to any UML tool.
-
-```markdown
-# Legends of Valor – Design & UML Overview
-
-## 1. High-Level Architecture
-
-The project follows a layered, package-based structure:
-
-- **Game Flow Layer** (`legends.game`)
-- **Domain Layer**  
-  - Characters (`legends.characters`)  
-  - Items (`legends.items`)  
-  - World (`legends.world`)  
-  - Market (`legends.market`)
-- **Infrastructure Layer** (`legends.data`, `legends.ui`)
-
-The **State pattern** is used to handle different game modes (exploration, battle, inventory, market, hero selection) while `LegendsGame` acts as the central controller.
-
----
-
-## 2. Core Class Diagram (Textual Overview)
-
-### Game Flow
-
-- `LegendsGame`
-  - -state: GameState  
-  - -map: WorldMap  
-  - -party: Party  
-  - -market: Market  
-  - +run()  
-  - +setState(GameState)  
-  - +getMap(), getParty(), getMarket()
-
-- `Main`
-  - +main(String[]): creates `LegendsGame`, calls `run()`.
-
-- `GameState` (interface)
-  - +render()  
-  - +update(LegendsGame)  
-  - +handleInput(String)  
-  - +isFinished(): boolean
-
-- `ExplorationState` implements `GameState`
-  - -map: WorldMap  
-  - -party: Party  
-  - -game: LegendsGame
-
-- `BattleState` implements `GameState`
-  - -game: LegendsGame  
-  - -party: Party  
-  - -monsters: List<Monster>  
-  - -turnOrder: List<Hero>  
-  - -turnIndex: int
-
-- `InventoryState` implements `GameState`
-  - -game: LegendsGame  
-  - -selectedHero: Hero
-
-- `MarketState` implements `GameState`
-  - -game: LegendsGame  
-  - -market: Market
-
-- `HeroSelection`
-  - -warriors: List<Warrior>  
-  - -paladins: List<Paladin>  
-  - -sorcerers: List<Sorcerer>  
-  - +selectHeroes(): Party
-
-### Characters
-
-- `Hero` (abstract)
-  - -name, level, hp, mp, strength, dexterity, agility, gold  
-  - -inventory: Inventory  
-  - +getAttackDamage(), getDodgeChance(), addExperience(), earnGold(), etc.
-
-- `Warrior`, `Paladin`, `Sorcerer` extend `Hero`
-
-- `Monster`
-  - -name, level, hp, damage, defense, dodgeChance  
-  - +takeDamage(), etc.
-
-- `Party`
-  - -heroes: List<Hero>  
-  - -position: Position  
-  - +getHeroes(), getAliveHeroes(), getRandomAliveHero(), allDead(), moveTo(Position), printStats()
-
-- `Inventory`
-  - -items: List<Item>  
-  - +getItems(), addItem(Item), removeItem(Item), printFormatted(int)
-
-### Items / Market
-
-- `Item` (interface)
-  - +getName(), getPrice(), getRequiredLevel()
-
-- `Weapon` implements `Item`
-  - -damage: int  
-  - -handsRequired: int
-
-- `Armor` implements `Item`
-  - -reduction: int
-
-- `Potion` implements `Item`
-  - -effectAmount: int  
-  - -attributes: List<PotionAttribute>
-
-- `Spell` implements `Item`
-  - -damage: double  
-  - -manaCost: double  
-  - -type: SpellType
-
-- `PotionAttribute` enum  
-- `SpellType` enum  
-
-- `Market`
-  - -weapons: List<Weapon>  
-  - -armor: List<Armor>  
-  - -potions: List<Potion>  
-  - -spells: List<Spell>
-
-### World
-
-- `WorldMap`
-  - -grid: Tile[][]  
-  - -size: int  
-  - +setTile(), getTile(), inBounds(), canMove(), print(Position)
-
-- `Tile` (abstract)
-  - +isAccessible(): boolean  
-  - +getSymbol(): String
-
-- `CommonTile`, `InaccessibleTile`, `MarketTile` extend `Tile`
-
-- `Position`
-  - +row: int  
-  - +col: int
-
-- `MapGenerator`
-  - +generate(int size): WorldMap
-
-### Data & UI
-
-- `DataLoader`
-  - +loadWarriors(), loadPaladins(), loadSorcerers()  
-  - +loadAllItems(), loadAllMonsters()  
-  - static `globalMonsters`
-
-- `MonsterFactory`
-  - +generateMonstersForParty(Party): List<Monster>
-
-- `BarUtils`
-  - +makeBar(current, max, length): String
-
-- `Colors`
-  - ANSI color constants.
-
----
-
-## 3. PlantUML Snippet (for Diagram Generation)
-
-You can paste this into a PlantUML renderer to generate a visual UML class diagram (it’s partial but covers core structure):
-
-```plantuml
-@startuml
-
-package "legends.game" {
-  interface GameState {
-    +render()
-    +update(LegendsGame)
-    +handleInput(String)
-    +isFinished(): boolean
-  }
-
-  class LegendsGame {
-    -state: GameState
-    -map: WorldMap
-    -party: Party
-    -market: Market
-    +run()
-    +setState(GameState)
-    +getMap(): WorldMap
-    +getParty(): Party
-    +getMarket(): Market
-  }
-
-  class ExplorationState implements GameState
-  class BattleState implements GameState
-  class InventoryState implements GameState
-  class MarketState implements GameState
-  class HeroSelection
-
-  class Main {
-    +main(String[])
-  }
-
-  LegendsGame --> GameState
-  LegendsGame --> WorldMap
-  LegendsGame --> Party
-  LegendsGame --> Market
-
-  ExplorationState --> LegendsGame
-  BattleState --> LegendsGame
-  InventoryState --> LegendsGame
-  MarketState --> LegendsGame
-
-  GameState <|.. ExplorationState
-  GameState <|.. BattleState
-  GameState <|.. InventoryState
-  GameState <|.. MarketState
-}
-
-package "legends.characters" {
-  abstract class Hero {
-    -name: String
-    -level: int
-    -hp: double
-    -mp: double
-    -strength: double
-    -dexterity: double
-    -agility: double
-    -gold: int
-  }
-
-  class Warrior extends Hero
-  class Paladin extends Hero
-  class Sorcerer extends Hero
-
-  class Monster {
-    -name: String
-    -level: int
-    -hp: double
-    -damage: double
-  }
-
-  class Party {
-    -heroes: List<Hero>
-    -position: Position
-  }
-
-  class Inventory {
-    -items: List<Item>
-  }
-
-  Party "1" o-- "many" Hero
-  Hero "1" o-- "1" Inventory
-}
-
-package "legends.items" {
-  interface Item {
-    +getName(): String
-    +getPrice(): int
-    +getRequiredLevel(): int
-  }
-
-  class Weapon implements Item {
-    -damage: int
-    -handsRequired: int
-  }
-
-  class Armor implements Item {
-    -reduction: int
-  }
-
-  class Potion implements Item {
-    -effectAmount: int
-  }
-
-  class Spell implements Item {
-    -damage: double
-    -manaCost: double
-  }
-
-  enum PotionAttribute
-  enum SpellType
-
-  Item <|.. Weapon
-  Item <|.. Armor
-  Item <|.. Potion
-  Item <|.. Spell
-}
-
-package "legends.market" {
-  class Market {
-    -weapons: List<Weapon>
-    -armor: List<Armor>
-    -potions: List<Potion>
-    -spells: List<Spell>
-  }
-
-  Market --> Weapon
-  Market --> Armor
-  Market --> Potion
-  Market --> Spell
-}
-
-package "legends.world" {
-  abstract class Tile {
-    +isAccessible(): boolean
-    +getSymbol(): String
-  }
-
-  class CommonTile extends Tile
-  class InaccessibleTile extends Tile
-  class MarketTile extends Tile
-
-  class WorldMap {
-    -grid: Tile[][]
-    -size: int
-    +print(p: Position)
-  }
-
-  class MapGenerator {
-    +generate(size: int): WorldMap
-  }
-
-  class Position {
-    +row: int
-    +col: int
-  }
-
-  WorldMap "1" o-- "many" Tile
-  Party --> Position
-}
-
-package "legends.data" {
-  class DataLoader
-  class MonsterFactory
-}
-
-package "legends.ui" {
-  class BarUtils
-  class Colors
-}
-
-LegendsGame ..> DataLoader
-LegendsGame ..> HeroSelection
-BattleState ..> Monster
-BattleState ..> Item
-```

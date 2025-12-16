@@ -1,12 +1,12 @@
 package legends.game;
 
 /**
- * Entry point of the complete Legends of Valor and Monsters & Heroes application.1
+ * Entry point of the complete Legends of Valor and Monsters & Heroes application
  * 
  * This class simply initializes the game engine and starts execution.
  * 
  * Main responsibilities:
- *  - Create a LegendsGame instance
+ *  - Create a LegendsApp instance
  *  - Call run() to start intro → hero selection → gameplay loop
  */
 public class Main {
